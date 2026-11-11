@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Živý editor s kurzom</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#3a5bd9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kurz kódu">
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--text:#1c1c1a;--muted:#6b6a65;--line:#dcdad3;--acc:#3a5bd9;--acc-t:#fff;--ok:#2e8b57;--bad:#c0392b;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16171a;--panel:#212226;--text:#ececea;--muted:#9a9990;--line:#37383d;--acc:#7b95ff;--acc-t:#10152e;--ok:#4cc17f;--bad:#e66a5c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16171a;--panel:#212226;--text:#ececea;--muted:#9a9990;--line:#37383d;--acc:#7b95ff;--acc-t:#10152e;--ok:#4cc17f;--bad:#e66a5c;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+header{padding:7px 12px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;align-items:center;gap:10px}
+h1{font-size:15px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dots{display:flex;gap:4px}
+#dots i{width:9px;height:9px;border-radius:50%;background:var(--line);cursor:pointer}
+#dots i.d{background:var(--ok)}#dots i.c{outline:2px solid var(--acc)}
+#sp{flex:1;display:flex;flex-direction:column;min-height:0}
+.pane{min-height:0;display:flex;flex-direction:column;background:var(--panel);overflow:hidden}
+.dv{flex:0 0 28px;position:relative;background:var(--line);cursor:row-resize;touch-action:none;display:flex;align-items:center;justify-content:center;user-select:none}
+.dv::before{content:"";position:absolute;left:0;right:0;top:-12px;bottom:-12px}
+.dv::after{content:"";width:56px;height:6px;border-radius:3px;background:var(--muted)}
+#les{padding:12px 14px;overflow:auto;font-size:15px;line-height:1.55}
+#les h2{font-size:17px;margin:0 0 6px}
+#les p,#les ul{margin:6px 0}
+#les code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:13px}
+.task{border-left:3px solid var(--acc);padding:6px 10px;margin:10px 0;background:var(--bg)}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px;font:inherit;font-size:14px}
+.tabs button.on{color:var(--acc);font-weight:600;box-shadow:inset 0 -2px 0 var(--acc)}
+textarea{flex:1;border:0;resize:none;outline:0;padding:10px;background:var(--panel);color:var(--text);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:2}
+iframe{flex:1;border:0;background:#fff;width:100%}
+footer{display:flex;gap:8px;align-items:center;padding:7px 12px;border-top:1px solid var(--line);background:var(--panel)}
+#msg{flex:1;font-size:13px;line-height:1.3}
+button.p{font:inherit;font-size:14px;border:0;border-radius:8px;padding:8px 14px;background:var(--acc);color:var(--acc-t);font-weight:600}
+button.s{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--bg);color:var(--text)}
+#crs{display:flex;gap:6px;padding:6px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+#crs button{flex:1;font:inherit;font-size:13px;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+#crs button.on{background:var(--acc);color:var(--acc-t);border-color:var(--acc);font-weight:600}
+#crs button.lk{opacity:.55}
+</style>
+</head>
+<body>
+<header><h1 id="ttl">Živý editor</h1><div id="dots"></div></header>
+<div id="crs"></div>
+<div id="sp">
+  <section class="pane" id="a" style="flex:34 1 0"><div id="les"></div></section>
+  <div class="dv" id="d1"></div>
+  <section class="pane" id="b" style="flex:33 1 0">
+    <div class="tabs" id="tabs"><button data-t="h" class="on">HTML</button><button data-t="c">CSS</button><button data-t="j">JS</button></div>
+    <textarea id="code" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off"></textarea>
+  </section>
+  <div class="dv" id="d2"></div>
+  <section class="pane" id="c" style="flex:33 1 0"><iframe id="fr" sandbox="allow-scripts allow-same-origin" title="Náhľad"></iframe></section>
+</div>
+<footer><button class="s" id="prev">◀</button><div id="msg"></div><button class="s" id="hint">Nápoveda</button><button class="p" id="chk">Skontrolovať</button></footer>
+<script>
+var L=[
+{t:"Čo je webová stránka",tab:"h",x:'<p>Každá stránka má tri vrstvy:</p><ul><li><b>HTML</b> je kostra: čo na stránke je (nadpisy, texty, zoznamy).</li><li><b>CSS</b> je vzhľad: farby, veľkosti, rámiky.</li><li><b>JavaScript</b> je správanie: čo sa stane po kliknutí.</li></ul><p>Začíname HTML. Obsah obaľujeme <b>značkami</b>, ktoré majú začiatok a koniec: <code>&lt;h1&gt;Ahoj&lt;/h1&gt;</code>. Značka <code>h1</code> je hlavný nadpis. Výsledok vidíš hneď dole v náhľade.</p>',task:"Do karty HTML napíš nadpis h1 s ľubovoľným textom.",s:{h:"<p>Vitaj!</p>"},hint:"Napíš: <h1>Môj nadpis</h1>",
+ c:function(d){var e=d.querySelector("h1");return e&&e.textContent.trim()?null:"Nenašiel som vyplnený nadpis h1."}},
+{t:"Odseky",tab:"h",x:'<p>Bežný text patrí do odseku: <code>&lt;p&gt;Text&lt;/p&gt;</code>. Každý odsek sa zobrazí na novom riadku. Značky píšeš vždy v pároch: otváracia <code>&lt;p&gt;</code> a zatváracia <code>&lt;/p&gt;</code> s lomkou.</p>',task:"Pridaj aspoň dva odseky p s textom.",s:{h:"<h1>Moja stránka</h1>\n"},hint:"<p>Prvý odsek.</p> a pod ním <p>Druhý odsek.</p>",
+ c:function(d){var n=0;d.querySelectorAll("p").forEach(function(p){if(p.textContent.trim())n++});return n>=2?null:"Mám "+n+" odsek, potrebujem aspoň 2."}},
+{t:"Tučné písmo a kurzíva",tab:"h",x:'<p>Značky sa dajú vnárať do seba. <code>&lt;strong&gt;</code> robí text tučným a <code>&lt;em&gt;</code> kurzívou. Napríklad: <code>&lt;p&gt;Toto je &lt;strong&gt;dôležité&lt;/strong&gt;.&lt;/p&gt;</code></p>',task:"Zvýrazni jedno slovo cez strong a iné cez em.",s:{h:"<p>Učím sa programovať a je to zábava.</p>"},hint:"Obaľ slovo značkou: <strong>programovať</strong> a <em>zábava</em>.",
+ c:function(d){if(!d.querySelector("strong"))return"Chýba značka strong.";return d.querySelector("em")?null:"Chýba značka em."}},
+{t:"Odkazy",tab:"h",x:'<p>Odkaz sa píše značkou <code>a</code> s atribútom <code>href</code>, ktorý hovorí, kam odkaz vedie: <code>&lt;a href="https://claude.ai"&gt;Klikni sem&lt;/a&gt;</code>. Text medzi značkami je to, čo používateľ vidí.</p>',task:"Pridaj odkaz s textom a href.",s:{h:"<p>Moja obľúbená stránka:</p>\n"},hint:'<a href="https://claude.ai">Claude</a>',
+ c:function(d){var a=d.querySelector("a[href]");return a&&a.textContent.trim()?null:"Chýba odkaz a s href a textom."}},
+{t:"Zoznamy",tab:"h",x:'<p>Zoznam s odrážkami je <code>&lt;ul&gt;</code> a každá položka vnútri je <code>&lt;li&gt;</code>: <code>&lt;ul&gt;&lt;li&gt;Prvá&lt;/li&gt;&lt;li&gt;Druhá&lt;/li&gt;&lt;/ul&gt;</code>.</p>',task:"Do zoznamu doplň aspoň tri položky li.",s:{h:"<h2>Moje záľuby</h2>\n<ul>\n  \n</ul>"},hint:"Medzi ul vlož tri riadky <li>Text</li>.",
+ c:function(d){var n=d.querySelectorAll("ul li").length;return n>=3?null:"V zozname je "+n+" položky, potrebujem 3."}},
+{t:"Obrázky",tab:"h",x:'<p>Obrázok sa vkladá značkou <code>&lt;img&gt;</code>. Tá nemá zatváraciu značku, lebo nič neobaľuje. Dôležité sú dva atribúty: <code>src</code> (odkiaľ obrázok je) a <code>alt</code> (krátky popis pre ľudí, ktorí obrázok nevidia, alebo keď sa nenačíta). Veľkosť nastavíš cez <code>width</code>.</p><p>Obrázok je už vložený, doplň mu popis a šírku.</p>',task:"Doplň obrázku atribúty alt (popis) a width (šírka v pixeloch).",s:{h:'<img src="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20100%20100%27%3E%3Ccircle%20cx=%2750%27%20cy=%2750%27%20r=%2745%27%20fill=%27orange%27/%3E%3C/svg%3E">'},hint:'Pridaj do značky: alt="Oranžový kruh" width="150"',
+ c:function(d){var i=d.querySelector("img");if(!i)return"Chýba obrázok img.";if(!(i.getAttribute("alt")||"").trim())return"Chýba atribút alt s popisom.";return i.getAttribute("width")?null:"Chýba atribút width."}},
+{t:"CSS: farba",tab:"c",x:'<p>Prepni sa na kartu <b>CSS</b>. Pravidlo má tvar <code>výber { vlastnosť: hodnota; }</code>. Napríklad <code>h1 { color: red; }</code> zafarbí všetky nadpisy h1 na červeno. Farbu zadáš menom (blue, green, orange) alebo kódom (#3366ff).</p>',task:"V CSS zmeň farbu nadpisu h1 na inú než čiernu.",s:{h:"<h1>Farebný nadpis</h1>",c:""},hint:"h1 { color: blue; }",
+ c:function(d){var e=d.querySelector("h1");if(!e)return"Chýba nadpis h1 v HTML.";return d.defaultView.getComputedStyle(e).color!=="rgb(0, 0, 0)"?null:"Nadpis je stále čierny."}},
+{t:"CSS: pozadie a písmo",tab:"c",x:'<p><code>background-color</code> mení pozadie a <code>font-size</code> veľkosť písma. Výber <code>body</code> znamená celú stránku. Viac pravidiel môžeš dať pod seba, každé končí bodkočiarkou.</p>',task:"Nastav body pozadie (ľubovoľná farba) a odsekom p font-size: 20px.",s:{h:"<h1>Moja stránka</h1>\n<p>Toto je odsek.</p>",c:""},hint:"body { background-color: lightyellow; }\np { font-size: 20px; }",
+ c:function(d){var w=d.defaultView,b=w.getComputedStyle(d.body),p=d.querySelector("p");if(b.backgroundColor==="rgba(0, 0, 0, 0)")return"Pozadie stránky nie je nastavené.";return p&&w.getComputedStyle(p).fontSize==="20px"?null:"Odsek nemá písmo 20px."}},
+{t:"CSS: trieda a rámik",tab:"c",x:'<p>Prvku môžeš dať meno cez atribút <code>class</code>: <code>&lt;div class="box"&gt;</code>. V CSS ho vyberieš bodkou: <code>.box { ... }</code>. <code>border</code> je rámik (napr. <code>2px solid blue</code>) a <code>padding</code> vnútorný odstup (napr. <code>16px</code>).</p>',task:"Daj prvku .box rámik (border) a padding.",s:{h:'<div class="box">Som v rámčeku</div>',c:""},hint:".box { border: 2px solid blue; padding: 16px; }",
+ c:function(d){var e=d.querySelector(".box");if(!e)return"Chýba prvok s triedou box.";var s=d.defaultView.getComputedStyle(e);if(s.borderTopWidth==="0px")return"Rámik zatiaľ nie je.";return s.paddingTop==="0px"?"Chýba padding.":null}},
+{t:"JavaScript: zmena textu",tab:"j",x:'<p>Prepni sa na kartu <b>JS</b>. JavaScript vie meniť stránku. Prvok nájdeš podľa jeho <code>id</code> a text zmeníš takto: <code>document.getElementById("t").textContent = "Nový text";</code> Slovo <code>document</code> je celá stránka, <code>getElementById</code> nájde prvok a <code>textContent</code> je jeho text.</p>',task:"Zmeň text prvku #t na niečo iné než „Pôvodný text“.",s:{h:'<p id="t">Pôvodný text</p>',c:"",j:""},hint:'document.getElementById("t").textContent = "Zmenené!";',
+ c:function(d){var e=d.getElementById("t");return e&&e.textContent.trim()&&e.textContent!=="Pôvodný text"?null:"Text sa zatiaľ nezmenil."}},
+{t:"JavaScript: tlačidlo",tab:"j",x:'<p><b>Premenná</b> uchová hodnotu: <code>let c = 0;</code>. Po kliknutí spustíš funkciu: <code>tlacidlo.onclick = function(){ ... };</code> a <code>c = c + 1;</code> zvýši číslo o 1. Ak sa niečo pokazí, chybu uvidíš v náhľade červenou.</p>',task:"Po každom kliknutí na tlačidlo zvýš číslo v #n o 1.",s:{h:'<p id="n">0</p>\n<button id="b">+1</button>',c:"",j:"let c = 0;\n"},hint:'let c = 0;\nvar n = document.getElementById("n");\ndocument.getElementById("b").onclick = function(){\n  c = c + 1;\n  n.textContent = c;\n};',
+ c:function(d){var b=d.getElementById("b"),n=d.getElementById("n");if(!b||!n)return"Chýba tlačidlo alebo číslo.";b.click();b.click();return n.textContent.trim()==="2"?null:"Po dvoch kliknutiach má byť číslo 2, mám „"+n.textContent+"“."}},
+{t:"JavaScript: podmienky",tab:"j",x:'<p>Podmienka nechá program rozhodnúť sa: <code>if (podmienka) { ... } else { ... }</code>. Porovnávame napríklad <code>&gt;=</code> (väčšie alebo rovné) alebo <code>===</code> (rovná sa). Príklad: <code>if (vek &gt;= 18) { text = "dospelý"; } else { text = "dieťa"; }</code></p>',task:"V #v je číslo. Ak je aspoň 10, napíš do #r „veľa“, inak „málo“.",s:{h:'<p id="v">12</p>\n<p id="r"></p>',c:"",j:"var v = Number(document.getElementById('v').textContent);\nvar r = document.getElementById('r');\n"},hint:"if (v >= 10) {\n  r.textContent = 'veľa';\n} else {\n  r.textContent = 'málo';\n}",
+ c:function(d){var e=d.getElementById("r");return e&&e.textContent.trim()==="veľa"?null:"Číslo 12 je aspoň 10, očakávam text veľa, mám „"+(e?e.textContent.trim():"")+"“."}},
+{t:"JavaScript: cykly",tab:"j",x:'<p>Cyklus opakuje kus kódu. <code>for (let i = 1; i &lt;= 5; i++) { ... }</code> znamená: začni s <code>i = 1</code>, opakuj kým je <code>i</code> najviac 5 a po každom kole zvýš <code>i</code> o 1. Text môžeš postupne skladať cez <code>+=</code>.</p>',task:"Pomocou cyklu vypíš do #o čísla 1 až 5 oddelené medzerou (1 2 3 4 5).",s:{h:'<p id="o"></p>',c:"",j:"var o = document.getElementById('o');\nvar t = '';\n"},hint:"for (let i = 1; i <= 5; i++) {\n  t += i + ' ';\n}\no.textContent = t;",
+ c:function(d){var e=d.getElementById("o");return e&&e.textContent.trim()==="1 2 3 4 5"?null:"Očakávam 1 2 3 4 5, mám „"+(e?e.textContent.trim():"")+"“."}},
+{t:"Tvoj projekt",tab:"h",x:'<p>Teraz bez vedenia. Postav <b>vlastnú stránku o sebe</b> zo všetkého, čo vieš: HTML, CSS aj JavaScript. Môžeš ju kedykoľvek upravovať a experimentovať.</p>',task:"Stránka musí mať h1, odsek p, zoznam s aspoň 3 položkami a odkaz.",s:{h:"",c:"",j:""},hint:"Použi h1, p, ul s tromi li a odkaz a s href.",
+ c:function(d){if(!d.querySelector("h1"))return"Chýba h1.";if(!d.querySelector("p"))return"Chýba p.";if(d.querySelectorAll("ul li").length<3)return"Zoznam potrebuje 3 položky.";return d.querySelector("a[href]")?null:"Chýba odkaz."}}
+];
+var KEY="zivy-kurz-v1",P={i:0,done:{},code:{}},cur="h";
+try{var sv=localStorage.getItem(KEY);if(sv)P=JSON.parse(sv)}catch(e){}
+if(!P.v){var M=[0,1,2,3,4,6,7,8,9,10,13],nd={},nc={};Object.keys(P.done||{}).forEach(function(k){nd[M[k]]=P.done[k]});Object.keys(P.code||{}).forEach(function(k){nc[M[k]]=P.code[k]});P.done=nd;P.code=nc;P.i=M[P.i]||0;P.v=2}
+var $=function(i){return document.getElementById(i)},code=$("code"),fr=$("fr"),tm;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
+function S(){var k=P.i;if(!P.code[k]){var s=L[k].s;P.code[k]={h:s.h||"",c:s.c||"",j:s.j||""}}return P.code[k]}
+function run(){var s=S();
+  fr.srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;padding:8px}</style><style>'+s.c+'</style></head><body>'+s.h+'<script>window.onerror=function(m){document.body.insertAdjacentHTML("beforeend","<pre style=\\"color:#c00;white-space:pre-wrap\\">Chyba: "+m+"</pre>")};<\/script><script>'+s.j+'<\/script></body></html>';
+}
+function tab(t){cur=t;code.value=S()[t];document.querySelectorAll("#tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)})}
+var C=[{n:"HTML",a:0,b:5,t:"h"},{n:"CSS",a:6,b:8,t:"hc"},{n:"JavaScript",a:9,b:13,t:"hcj"}];
+function cr(i){for(var k=0;k<C.length;k++)if(i>=C[k].a&&i<=C[k].b)return k;return 0}
+function cdone(k){for(var i=C[k].a;i<=C[k].b;i++)if(!P.done[i])return false;return true}
+function unlocked(k){return k===0||cdone(k-1)}
+function dots(){
+  var k=cr(P.i),h="";
+  for(var i=C[k].a;i<=C[k].b;i++)h+='<i data-i="'+i+'" class="'+(P.done[i]?"d ":"")+(i===P.i?"c":"")+'"></i>';
+  $("dots").innerHTML=h;
+  $("crs").innerHTML=C.map(function(c,j){var u=unlocked(j);return '<button data-k="'+j+'" class="'+(j===k?"on":"")+(u?"":" lk")+'">'+(u?"":"🔒 ")+(j+1)+". "+c.n+"</button>"}).join("");
+}
+function load(){
+  var l=L[P.i],k=cr(P.i),c=C[k];
+  document.querySelectorAll("#tabs button").forEach(function(b){b.style.display=c.t.indexOf(b.dataset.t)>=0?"":"none"});
+  $("ttl").textContent="Kurz "+c.n+" · lekcia "+(P.i-c.a+1)+"/"+(c.b-c.a+1)+": "+l.t;
+  $("les").innerHTML='<h2>'+l.t+'</h2>'+l.x+'<div class="task"><b>Úloha:</b> '+l.task+'</div>';
+  $("les").scrollTop=0;tab(l.tab);$("msg").textContent="";dots();run();
+  $("chk").textContent=P.done[P.i]&&(P.i<c.b||k<C.length-1)?(P.i<c.b?"Ďalšia lekcia":"Ďalší kurz"):"Skontrolovať";
+}
+function bal(src){
+  var tg=["h1","h2","p","strong","em","a","ul","li","div","button","b"];
+  for(var i=0;i<tg.length;i++){var t=tg[i],o=(src.match(new RegExp("<"+t+"[\\s>]","gi"))||[]).length,c=(src.match(new RegExp("</"+t+">","gi"))||[]).length;
+    if(o!==c)return "Pozor: značka <"+t+"> nie je správne zatvorená ("+o+"× otvorená, "+c+"× zatvorená).";}
+  return null;
+}
+$("chk").onclick=function(){
+  var k0=cr(P.i);if(P.done[P.i]&&(P.i<C[k0].b||k0<C.length-1)){P.i++;save();load();return}
+  clearTimeout(tm);run();
+  fr.onload=function(){
+    fr.onload=null;
+    var m=bal(S().h),d=fr.contentDocument,msg=$("msg");
+    if(!m&&d){try{m=L[P.i].c(d)}catch(e){m="Kontrola zlyhala: "+e.message}}
+    if(m){msg.style.color="var(--bad)";msg.textContent=m;return}
+    P.done[P.i]=true;save();dots();msg.style.color="var(--ok)";
+    var k=cr(P.i),end=P.i===C[k].b;
+    msg.textContent=!end?"Správne! Môžeš ísť ďalej.":(k<C.length-1?"Kurz "+C[k].n+" máš hotový! Odomkol sa ďalší kurz.":"Hotovo, všetky tri kurzy máš za sebou!");
+    if(!end||k<C.length-1)$("chk").textContent=end?"Ďalší kurz":"Ďalšia lekcia";
+  };
+};
+$("prev").onclick=function(){if(P.i>C[cr(P.i)].a){P.i--;save();load()}};
+$("dots").addEventListener("click",function(e){var i=e.target.dataset&&e.target.dataset.i;if(i!==undefined){P.i=+i;save();load()}});
+$("hint").onclick=function(){$("msg").style.color="var(--muted)";$("msg").textContent=L[P.i].hint};
+code.addEventListener("input",function(){S()[cur]=code.value;save();clearTimeout(tm);tm=setTimeout(run,400)});
+code.addEventListener("keydown",function(e){if(e.key==="Tab"){e.preventDefault();var s=code.selectionStart;code.value=code.value.slice(0,s)+"  "+code.value.slice(code.selectionEnd);code.selectionStart=code.selectionEnd=s+2;code.dispatchEvent(new Event("input"))}});
+$("tabs").addEventListener("click",function(e){var t=e.target.dataset&&e.target.dataset.t;if(t)tab(t)});
+var F=[34,33,33],sp=$("sp"),drag=0;
+function ap(){["a","b","c"].forEach(function(id,k){$(id).style.flex=F[k]+" 1 0"})}
+function dn(n){return function(e){drag=n;e.target.setPointerCapture(e.pointerId);fr.style.pointerEvents="none"}}
+$("d1").addEventListener("pointerdown",dn(1));$("d2").addEventListener("pointerdown",dn(2));
+function mv(e){
+  if(!drag)return;
+  var r=sp.getBoundingClientRect(),p=(e.clientY-r.top)/r.height*100,T=100;
+  if(drag===1){var a=Math.min(Math.max(p,12),F[0]+F[1]-12);F[1]=F[0]+F[1]-a;F[0]=a}
+  else{var b=Math.min(Math.max(p,F[0]+12),88);F[1]=b-F[0];F[2]=T-b}
+  ap();
+}
+function up(){drag=0;fr.style.pointerEvents=""}
+["d1","d2"].forEach(function(id){$(id).addEventListener("pointermove",mv);$(id).addEventListener("pointerup",up);$(id).addEventListener("pointercancel",up)});
+$("crs").addEventListener("click",function(e){
+  var k=e.target.dataset&&e.target.dataset.k;if(k===undefined)return;k=+k;
+  if(!unlocked(k)){$("msg").style.color="var(--bad)";$("msg").textContent="Najprv dokonči kurz "+C[k-1].n+".";return}
+  if(cr(P.i)!==k){var s=C[k].a;for(var i=C[k].a;i<=C[k].b;i++){if(!P.done[i]){s=i;break}}P.i=s;save();load()}
+});
+load();
+if("serviceWorker" in navigator && location.protocol!=="file:"){try{navigator.serviceWorker.register("sw.js").catch(function(){})}catch(e){}}
+</script>
+</body>
+</html>

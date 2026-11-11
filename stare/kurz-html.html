@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kód po slovensky – prototyp</title>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--text:#1c1c1a;--muted:#6b6a65;--line:#dcdad3;--acc:#3a5bd9;--acc-t:#fff;--ok:#2e8b57;--bad:#c0392b;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16171a;--panel:#212226;--text:#ececea;--muted:#9a9990;--line:#37383d;--acc:#7b95ff;--acc-t:#10152e;--ok:#4cc17f;--bad:#e66a5c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16171a;--panel:#212226;--text:#ececea;--muted:#9a9990;--line:#37383d;--acc:#7b95ff;--acc-t:#10152e;--ok:#4cc17f;--bad:#e66a5c;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+header{padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;align-items:center;gap:10px}
+h1{font-size:16px;margin:0;flex:1}
+#dots{display:flex;gap:5px}
+#dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+#dots i.d{background:var(--ok)}#dots i.c{outline:2px solid var(--acc)}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--panel)}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:10px;font:inherit;font-size:14px}
+.tabs button.on{color:var(--acc);font-weight:600;box-shadow:inset 0 -2px 0 var(--acc)}
+.cols{flex:1;display:flex;min-height:0}
+.pane{flex:1;min-width:0;min-height:0;display:none;flex-direction:column;background:var(--panel)}
+.pane.on{display:flex}
+.pane+.pane{border-left:1px solid var(--line)}
+#les{padding:14px;overflow:auto;font-size:15px;line-height:1.55}
+#les h2{font-size:18px;margin:0 0 8px}
+#les code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:13px}
+.task{border-left:3px solid var(--acc);padding:6px 10px;margin:12px 0;background:var(--bg)}
+textarea{flex:1;border:0;resize:none;outline:0;padding:12px;background:var(--panel);color:var(--text);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:2}
+iframe{flex:1;border:0;background:#fff;width:100%}
+footer{display:flex;gap:8px;align-items:center;padding:8px 12px;border-top:1px solid var(--line);background:var(--panel)}
+#msg{flex:1;font-size:13px}
+button.p{font:inherit;font-size:14px;border:0;border-radius:8px;padding:9px 14px;background:var(--acc);color:var(--acc-t);font-weight:600}
+button.s{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--bg);color:var(--text)}
+@media(min-width:900px){.tabs{display:none}.pane{display:flex}}
+</style>
+</head>
+<body>
+<header><h1>Kód po slovensky</h1><div id="dots"></div></header>
+<div class="tabs" id="tabs"><button data-p="les" class="on">Lekcia</button><button data-p="cod">Kód</button><button data-p="pre">Náhľad</button></div>
+<div class="cols">
+  <section class="pane on" id="p-les"><div id="les"></div></section>
+  <section class="pane" id="p-cod"><textarea id="code" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea></section>
+  <section class="pane" id="p-pre"><iframe id="fr" sandbox="allow-same-origin" title="Náhľad"></iframe></section>
+</div>
+<footer><div id="msg"></div><button class="s" id="hint">Nápoveda</button><button class="p" id="chk">Skontrolovať</button></footer>
+<script>
+var L=[
+{t:"Nadpis",x:"<p>Webová stránka sa skladá z <b>značiek</b>. Hlavný nadpis sa píše medzi <code>&lt;h1&gt;</code> a <code>&lt;/h1&gt;</code>.</p>",task:"Pridaj nadpis <code>h1</code> s ľubovoľným textom.",s:"<p>Vitaj!</p>",h:"Napíš: <h1>Môj nadpis</h1>",
+ c:function(d){var e=d.querySelector("h1");return e&&e.textContent.trim()?null:"Nenašiel som vyplnený nadpis h1."}},
+{t:"Odseky",x:"<p>Text sa píše do odsekov: <code>&lt;p&gt;Text&lt;/p&gt;</code>.</p>",task:"Pridaj aspoň dva odseky <code>p</code> s textom.",s:"<h1>Moja stránka</h1>\n",h:"Dva riadky: <p>Prvý.</p> a <p>Druhý.</p>",
+ c:function(d){var n=0;d.querySelectorAll("p").forEach(function(p){if(p.textContent.trim())n++});return n>=2?null:"Mám len "+n+" odsek(y), potrebujem aspoň 2."}},
+{t:"Tučné a odkaz",x:"<p>Dôležité slová dáš do <code>&lt;strong&gt;</code>. Odkaz je <code>&lt;a href=\"https://claude.ai\"&gt;text&lt;/a&gt;</code>.</p>",task:"Daj slovo „dôležité“ do <code>strong</code> a pridaj odkaz <code>a</code> s <code>href</code>.",s:"<p>Toto je dôležité a toto je odkaz.</p>",h:"Obklop slovo značkou strong a slovo odkaz značkou a s href.",
+ c:function(d){if(!d.querySelector("strong"))return"Chýba značka strong.";return d.querySelector("a[href]")?null:"Chýba odkaz a s atribútom href."}},
+{t:"Zoznam",x:"<p>Zoznam s odrážkami je <code>&lt;ul&gt;</code> a každá položka <code>&lt;li&gt;</code>.</p>",task:"Vytvor zoznam <code>ul</code> s aspoň tromi položkami <code>li</code>.",s:"<ul>\n  \n</ul>",h:"Medzi ul vlož tri riadky <li>Text</li>.",
+ c:function(d){var n=d.querySelectorAll("ul li").length;return n>=3?null:"V zozname mám "+n+" položky, potrebujem aspoň 3."}},
+{t:"Farba (CSS)",x:"<p>Vzhľad určuje <b>CSS</b>. Napríklad <code>h1 { color: red; }</code> zafarbí nadpisy.</p>",task:"Zafarby nadpis <code>h1</code> na červeno.",s:"<style>\n  \n</style>\n<h1>Červený nadpis</h1>",h:"Medzi style napíš: h1 { color: red; }",
+ c:function(d){var e=d.querySelector("h1");if(!e)return"Chýba nadpis h1.";return d.defaultView.getComputedStyle(e).color==="rgb(255, 0, 0)"?null:"Nadpis zatiaľ nie je červený."}},
+{t:"Tvoj projekt",x:"<p>Teraz žiadne vedenie. Postav <b>vlastnú stránku o sebe</b> z toho, čo si sa naučil.</p>",task:"Stránka musí mať nadpis <code>h1</code>, odsek <code>p</code>, zoznam s aspoň 3 položkami a odkaz.",s:"",h:"Použi h1, p, ul s tromi li a odkaz a s href.",
+ c:function(d){if(!d.querySelector("h1"))return"Chýba nadpis h1.";if(!d.querySelector("p"))return"Chýba odsek p.";if(d.querySelectorAll("ul li").length<3)return"Zoznam potrebuje aspoň 3 položky.";return d.querySelector("a[href]")?null:"Chýba odkaz a s href."}}
+];
+var KEY="kurz-html-v1",P={i:0,done:{},code:{}};
+try{var sv=localStorage.getItem(KEY);if(sv)P=JSON.parse(sv)}catch(e){}
+var $=function(i){return document.getElementById(i)},code=$("code"),fr=$("fr"),tm;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
+function run(){fr.srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:sans-serif;padding:8px">'+code.value+'</body></html>'}
+function dots(){$("dots").innerHTML=L.map(function(_,i){return '<i class="'+(P.done[i]?"d ":"")+(i===P.i?"c":"")+'"></i>'}).join("")}
+function load(){
+  var l=L[P.i];
+  $("les").innerHTML='<h2>'+(P.i+1)+'. '+l.t+'</h2>'+l.x+'<div class="task"><b>Úloha:</b> '+l.task+'</div>';
+  code.value=P.code[P.i]!==undefined?P.code[P.i]:l.s;
+  $("msg").textContent="";dots();run();
+  var b=$("chk");b.textContent=P.done[P.i]&&P.i<L.length-1?"Ďalšia lekcia":"Skontrolovať";
+}
+function bal(src){
+  var tags=["h1","p","strong","a","ul","li","style","b"];
+  for(var i=0;i<tags.length;i++){var t=tags[i];
+    var o=(src.match(new RegExp("<"+t+"[\\s>]","gi"))||[]).length,c=(src.match(new RegExp("</"+t+">","gi"))||[]).length;
+    if(o!==c)return "Pozor: značka <"+t+"> nie je správne zatvorená ("+o+"× otvorená, "+c+"× zatvorená).";}
+  return null;
+}
+$("chk").onclick=function(){
+  if(P.done[P.i]&&P.i<L.length-1){P.i++;save();load();return}
+  clearTimeout(tm);run();
+  fr.onload=function(){
+    fr.onload=null;
+    var m=bal(code.value),d=fr.contentDocument,msg=$("msg");
+    if(!m&&d)m=L[P.i].c(d);
+    if(m){msg.style.color="var(--bad)";msg.textContent=m;return}
+    P.done[P.i]=true;save();dots();msg.style.color="var(--ok)";
+    msg.textContent=P.i<L.length-1?"Správne! Môžeš ísť ďalej.":"Hotovo, celý kurz máš za sebou!";
+    if(P.i<L.length-1)$("chk").textContent="Ďalšia lekcia";
+  };
+};
+$("hint").onclick=function(){$("msg").style.color="var(--muted)";$("msg").textContent=L[P.i].h};
+code.addEventListener("input",function(){P.code[P.i]=code.value;save();clearTimeout(tm);tm=setTimeout(run,300)});
+code.addEventListener("keydown",function(e){if(e.key==="Tab"){e.preventDefault();var s=code.selectionStart;code.value=code.value.slice(0,s)+"  "+code.value.slice(code.selectionEnd);code.selectionStart=code.selectionEnd=s+2;code.dispatchEvent(new Event("input"))}});
+$("tabs").addEventListener("click",function(e){var p=e.target.dataset&&e.target.dataset.p;if(!p)return;
+  document.querySelectorAll(".pane").forEach(function(x){x.classList.toggle("on",x.id==="p-"+p)});
+  document.querySelectorAll("#tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.p===p)});
+  if(p==="pre")run();
+});
+load();
+</script>
+</body>
+</html>

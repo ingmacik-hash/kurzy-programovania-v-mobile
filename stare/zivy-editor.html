@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Živý editor</title>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--text:#1c1c1a;--muted:#6b6a65;--line:#dcdad3;--accent:#c4552d;--accent-text:#fff;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--panel:#222226;--text:#ececea;--muted:#9a9990;--line:#37373d;--accent:#e0714a;--accent-text:#17171a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--panel:#222226;--text:#ececea;--muted:#9a9990;--line:#37373d;--accent:#e0714a;--accent-text:#17171a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
+h1{font-size:16px;margin:0;flex:1;white-space:nowrap}
+button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.split{flex:1;display:flex;flex-direction:column;min-height:0;--s:50%}
+.split.row{flex-direction:row}
+.pane{min-height:0;min-width:0;display:flex;flex-direction:column;background:var(--panel)}
+#ed{flex:0 0 var(--s)}
+#pv{flex:1}
+.divider{flex:0 0 14px;background:var(--line);cursor:row-resize;touch-action:none;display:flex;align-items:center;justify-content:center}
+.divider::after{content:"";width:36px;height:4px;border-radius:2px;background:var(--muted)}
+.split.row .divider{cursor:col-resize}
+.split.row .divider::after{width:4px;height:36px}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;border-radius:0;background:transparent;color:var(--muted);padding:8px}
+.tabs button.on{color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent);font-weight:600}
+textarea{flex:1;width:100%;border:0;resize:none;outline:0;padding:10px;background:var(--panel);color:var(--text);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;overflow:auto}
+iframe{flex:1;width:100%;border:0;background:#fff}
+</style>
+</head>
+<body>
+<header>
+  <h1>Živý editor</h1>
+  <button id="lay" title="Zmeniť rozloženie">⇄ Rozloženie</button>
+  <button id="reset" title="Vrátiť ukážku">Reset</button>
+</header>
+<div class="split" id="split">
+  <section class="pane" id="ed">
+    <div class="tabs" id="tabs">
+      <button data-t="html" class="on">HTML</button>
+      <button data-t="css">CSS</button>
+      <button data-t="js">JS</button>
+    </div>
+    <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+  </section>
+  <div class="divider" id="div"></div>
+  <section class="pane" id="pv">
+    <iframe id="frame" sandbox="allow-scripts" title="Náhľad"></iframe>
+  </section>
+</div>
+<script>
+var DEF={
+html:'<h1>Ahoj, svet!</h1>\n<p>Klikni na tlačidlo.</p>\n<button id="b">Kliknutá 0×</button>',
+css:'body{font-family:sans-serif;text-align:center;padding:24px;background:#fdf3e7}\nh1{color:#c4552d}\nbutton{font-size:18px;padding:10px 18px;border-radius:10px;border:0;background:#c4552d;color:#fff}',
+js:'var n=0;\ndocument.getElementById("b").onclick=function(){\n  n++;\n  this.textContent="Kliknutá "+n+"×";\n};'};
+var S={html:DEF.html,css:DEF.css,js:DEF.js},cur="html",KEY="zivy-editor-v1";
+try{var sv=localStorage.getItem(KEY);if(sv){var o=JSON.parse(sv);if(o&&typeof o.html==="string")S=o}}catch(e){}
+var code=document.getElementById("code"),frame=document.getElementById("frame"),split=document.getElementById("split"),timer;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function run(){
+  frame.srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+S.css+'</style></head><body>'+S.html+'<script>'+S.js+'<\/script></body></html>';
+}
+function show(t){
+  cur=t;code.value=S[t];
+  document.querySelectorAll("#tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});
+}
+document.getElementById("tabs").addEventListener("click",function(e){var t=e.target.dataset&&e.target.dataset.t;if(t)show(t)});
+code.addEventListener("input",function(){S[cur]=code.value;save();clearTimeout(timer);timer=setTimeout(run,350)});
+code.addEventListener("keydown",function(e){
+  if(e.key==="Tab"){e.preventDefault();var s=code.selectionStart;code.value=code.value.slice(0,s)+"  "+code.value.slice(code.selectionEnd);code.selectionStart=code.selectionEnd=s+2;code.dispatchEvent(new Event("input"))}
+});
+document.getElementById("reset").onclick=function(){S={html:DEF.html,css:DEF.css,js:DEF.js};save();show(cur);run()};
+function setRow(r){split.classList.toggle("row",r);split.style.setProperty("--s","50%")}
+document.getElementById("lay").onclick=function(){setRow(!split.classList.contains("row"))};
+setRow(window.innerWidth>800);
+var dragging=false;
+var dv=document.getElementById("div");
+dv.addEventListener("pointerdown",function(e){dragging=true;dv.setPointerCapture(e.pointerId);frame.style.pointerEvents="none"});
+dv.addEventListener("pointermove",function(e){
+  if(!dragging)return;
+  var r=split.getBoundingClientRect(),row=split.classList.contains("row");
+  var p=row?(e.clientX-r.left)/r.width:(e.clientY-r.top)/r.height;
+  p=Math.min(0.85,Math.max(0.15,p));
+  split.style.setProperty("--s",(p*100)+"%");
+});
+function stop(){dragging=false;frame.style.pointerEvents=""}
+dv.addEventListener("pointerup",stop);dv.addEventListener("pointercancel",stop);
+show("html");run();
+</script>
+</body>
+</html>

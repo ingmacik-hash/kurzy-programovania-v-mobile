@@ -108,10 +108,15 @@
   var CHYBY_SKRIPT = "<script>window.onerror=function(m,s,l){try{parent.postMessage({syntaxChyba:String(m),riadok:l},'*')}catch(e){}" +
     "var p=document.createElement('pre');p.style.cssText='color:#c0392b;white-space:pre-wrap;font:13px monospace;background:#fde8e6;padding:8px;border-radius:6px';p.textContent='Chyba: '+m;(document.body||document.documentElement).appendChild(p)};" +
     /* Odkazy v náhľade neotvárajú cudzie stránky: kotvy (#…) posunú stránku, ostatné ukážu, kam by viedli. */
+    "function __ukaz(x,ms){var b=document.getElementById('__odkaz')||document.createElement('div');b.id='__odkaz';b.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;background:#141725;color:#fff;font:13px system-ui;padding:9px 12px;border-radius:9px;z-index:99999;white-space:pre-wrap';" +
+    "b.textContent=x;document.body.appendChild(b);clearTimeout(window.__t);window.__t=setTimeout(function(){b.remove()},ms||3000)}" +
     "document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;e.preventDefault();var h=a.getAttribute('href');" +
     "if(h.charAt(0)==='#'){var t=document.getElementById(h.slice(1));if(t)t.scrollIntoView({behavior:'smooth'});return}" +
-    "var b=document.getElementById('__odkaz')||document.createElement('div');b.id='__odkaz';b.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;background:#141725;color:#fff;font:13px system-ui;padding:9px 12px;border-radius:9px;z-index:99999';" +
-    "b.textContent='Odkaz by otvoril: '+h+(a.target==='_blank'?' (v novej karte)':'');document.body.appendChild(b);clearTimeout(window.__t);window.__t=setTimeout(function(){b.remove()},3000)});<\/script>";
+    "__ukaz('Odkaz by otvoril: '+h+(a.target==='_blank'?' (v novej karte)':''))});" +
+    /* Formulár sa v náhľade neodošle: ukážeme, aké údaje by poslal. */
+    "document.addEventListener('submit',function(e){if(e.defaultPrevented)return;e.preventDefault();var f=e.target,r=[];" +
+    "try{new FormData(f,e.submitter).forEach(function(v,k){r.push(k+' = '+(typeof v==='string'?(v===''?'(prázdne)':v):(v.name||'(súbor)')))})}catch(er){}" +
+    "__ukaz('Formulár by odoslal'+(f.getAttribute('action')?' na '+f.getAttribute('action'):'')+' ('+(f.method||'get').toUpperCase()+'):\\n'+(r.length?r.join('\\n'):'žiadne údaje – polia nemajú atribút name'),6000)});<\/script>";
   K.zostavStranku = function (s) {
     var html = s.html || "", css = s.css || "", js = s.js || "";
     var zaklad = "<style>body{font-family:system-ui,sans-serif;padding:8px;margin:0;line-height:1.4}</style>";

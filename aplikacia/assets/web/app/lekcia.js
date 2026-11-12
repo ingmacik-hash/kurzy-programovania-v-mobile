@@ -65,7 +65,7 @@
     var el = K.el('<div class="vyklad"><p class="otazka"></p><div class="sablona"></div><div class="zetony"></div></div>');
     el.querySelector(".otazka").innerHTML = k.otazka;
     var pocet = 0;
-    el.querySelector(".sablona").innerHTML = esc(k.sablona).replace(/\[\[(\d+)\]\]/g, function (_, n) { pocet++; return '<button type="button" class="slot" data-s="' + n + '">&nbsp;</button>'; });
+    el.querySelector(".sablona").innerHTML = esc(k.sablona).replace(/\[\[(\d+)\]\]/g, function (_, n) { pocet = Math.max(pocet, +n + 1); return '<button type="button" class="slot" data-s="' + n + '">&nbsp;</button>'; });
     for (var i = 0; i < pocet; i++) sloty.push(null);
     var zet = el.querySelector(".zetony");
     zet.innerHTML = tokeny.map(function (o) { return '<button type="button" class="zeton" data-t="' + o.i + '">' + esc(o.t) + "</button>"; }).join("");

@@ -280,3 +280,4 @@ body.bez-menu #spodna{display:none}
 .nazov-input:focus{border-bottom-color:var(--accent)}
 
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:50;animation:vsun .25s ease;max-width:calc(100% - 32px)}
+.vysledok table{border-collapse:collapse}.vysledok th,.vysledok td{border:1px solid #999;padding:4px 8px}.vysledok th{background:#eee}.vysledok caption{font-weight:700;padding-bottom:4px}

@@ -58,7 +58,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/kurz/
+    - assets/web/
+    - assets/web/app/
+    - assets/web/fonty/
+    - assets/web/kurzy/
+    - assets/web/kurzy/html/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

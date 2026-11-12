@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>Snímka obrazovky Kódovne</title>
+<!-- Zobrazí aplikáciu v šírke mobilu (412 px) v zadanom stave.
+     Parametre: ?hash=lekcia-html-1-2&kroky=8&tema=dark&odpoved=1
+     kroky = koľko krokov lekcie preskočiť správnou odpoveďou, odpoved=1 vyplní aj aktuálny krok (bez kontroly). -->
+<style>body{margin:0;background:#888}iframe{border:0;width:412px;height:880px;display:block}</style>
+</head>
+<body>
+<iframe id="app" src="../web/index.html"></iframe>
+<script>
+var q = new URLSearchParams(location.search);
+function cakaj(f) { return new Promise(function (ok) { (function s() { var v; try { v = f(); } catch (e) {} if (v) ok(v); else setTimeout(s, 30); })(); }); }
+function pauza(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function vypln(w, d, k) {
+  if (k.typ === "volba") d.querySelector('.moznost[data-i="' + k.spravna + '"]').click();
+  if (k.typ === "doplnenie") k.spravne.forEach(function (s) { [].filter.call(d.querySelectorAll(".zeton:not(.pouzity)"), function (x) { return x.textContent === s; })[0].click(); });
+  if (k.typ === "poradie") k.riadky.forEach(function (s) { [].filter.call(d.querySelectorAll(".poradie-zdroj .riadok-kod"), function (x) { return x.textContent === s; })[0].click(); });
+}
+(async function () {
+  var fr = document.getElementById("app");
+  await cakaj(function () { return fr.contentWindow.K && fr.contentWindow.K.katalog.length; });
+  var w = fr.contentWindow, K = w.K, d = fr.contentDocument;
+  K.vymaz();
+  if (q.get("tema")) { K.stav.nast.tema = q.get("tema"); K.temu(); }
+  if (q.get("hotove")) K.polozkyKurzu("html").slice(0, +q.get("hotove")).forEach(function (p) { if (p.typ === "lekcia") K.stav.hotove[p.id] = true; });
+  if (q.get("xp")) { K.pridajXP(+q.get("xp")); }
+  d.getElementById("obrazovka").innerHTML = "";
+  w.location.hash = q.get("hash") || "domov";
+  var h = q.get("hash") || "";
+  if (/^lekcia-/.test(h)) {
+    var kroky = K.lekcia(h.slice(7)).lekcia.kroky, n = +(q.get("kroky") || 0);
+    await cakaj(function () { return d.querySelector("[data-hlavne]"); });
+    for (var i = 0; i < n; i++) {
+      var k = kroky[i], hl = d.querySelector("[data-hlavne]");
+      if (k.typ === "vyklad") { hl.click(); continue; }
+      if (k.typ === "kod") { var ta = d.querySelector(".ed textarea"); ta.value = k.riesenie.html; ta.dispatchEvent(new w.Event("input")); }
+      else vypln(w, d, k);
+      hl.click(); await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }); hl.click(); await pauza(30);
+    }
+    if (q.get("odpoved") && kroky[n]) vypln(w, d, kroky[n]);
+    if (q.get("skontroluj")) { d.querySelector("[data-hlavne]").click(); }
+  }
+})();
+</script>
+</body>
+</html>

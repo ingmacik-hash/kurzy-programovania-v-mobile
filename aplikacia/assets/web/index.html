@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Kódovňa</title>
+<link rel="stylesheet" href="app/styl.css">
+</head>
+<body>
+<div id="app">
+  <main id="obrazovka" tabindex="-1"></main>
+  <nav id="spodna" aria-label="Hlavné menu">
+    <a href="#domov" data-n="domov"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg><span>Domov</span></a>
+    <a href="#slovnik" data-n="slovnik"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h11a2 2 0 0 1 2 2v15H7a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1zm1 14v1h10v-1zM9 7h7M9 10h5"/></svg><span>Slovník</span></a>
+    <a href="#projekty" data-n="projekty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"/></svg><span>Projekty</span></a>
+    <a href="#profil" data-n="profil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Profil</span></a>
+  </nav>
+</div>
+<script src="app/jadro.js"></script>
+<script src="app/editor.js"></script>
+<script src="app/lekcia.js"></script>
+<script src="app/obrazovky.js"></script>
+<script src="kurzy/katalog.js"></script>
+<script src="kurzy/html/modul1.js"></script>
+<script src="kurzy/html/slovnik.js"></script>
+<script>K.start();</script>
+</body>
+</html>

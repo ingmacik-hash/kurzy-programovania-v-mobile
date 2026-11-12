@@ -2,31 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-// Aplikácia zobrazuje kurz z assets/kurz/index.html (kópia ../index.html).
-// Kurz po aktualizácii skopíruj: tool/skopiruj_kurz.sh
-void main() => runApp(const KurzApp());
+// Aplikácia zobrazuje Kódovňu z assets/web/index.html (kópia priečinka ../web).
+// Po úprave webu spusti: tool/skopiruj_web.sh
+void main() => runApp(const KodovnaApp());
 
-class KurzApp extends StatelessWidget {
-  const KurzApp({super.key});
+class KodovnaApp extends StatelessWidget {
+  const KodovnaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Kurz kódu',
+      title: 'Kódovňa',
       debugShowCheckedModeBanner: false,
-      home: KurzObrazovka(),
+      home: KodovnaObrazovka(),
     );
   }
 }
 
-class KurzObrazovka extends StatefulWidget {
-  const KurzObrazovka({super.key});
+class KodovnaObrazovka extends StatefulWidget {
+  const KodovnaObrazovka({super.key});
 
   @override
-  State<KurzObrazovka> createState() => _KurzObrazovkaState();
+  State<KodovnaObrazovka> createState() => _KodovnaObrazovkaState();
 }
 
-class _KurzObrazovkaState extends State<KurzObrazovka> {
+class _KodovnaObrazovkaState extends State<KodovnaObrazovka> {
   late final WebViewController _web;
 
   @override
@@ -34,17 +34,34 @@ class _KurzObrazovkaState extends State<KurzObrazovka> {
     super.initState();
     _web = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadFlutterAsset('assets/kurz/index.html');
+      ..loadFlutterAsset('assets/web/index.html');
+  }
+
+  // Tlačidlo Späť: najprv sa pýtame webu (zatvorí lekciu, vráti sa z kurzu…).
+  // Ak je na domovskej obrazovke, aplikácia sa zavrie.
+  Future<void> _spat() async {
+    var navigoval = false;
+    try {
+      final r = await _web.runJavaScriptReturningResult('K.androidSpat()');
+      navigoval = r == true || r.toString() == 'true';
+    } catch (_) {}
+    if (!navigoval) SystemNavigator.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final tmava = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: tmava ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        backgroundColor: tmava ? const Color(0xFF16171A) : const Color(0xFFF6F5F2),
-        body: SafeArea(child: WebViewWidget(controller: _web)),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _spat();
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: tmava ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        child: Scaffold(
+          backgroundColor: tmava ? const Color(0xFF0C0F17) : const Color(0xFFF3F4F8),
+          body: SafeArea(child: WebViewWidget(controller: _web)),
+        ),
       ),
     );
   }

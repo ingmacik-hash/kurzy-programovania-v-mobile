@@ -1,4 +1,4 @@
-/* Syntax – obrazovky: domov, kurz, slovník, projekty, profil. */
+/* SyntaxCode – obrazovky: domov, kurz, slovník, projekty, profil. */
 (function () {
   var esc = K.esc;
   function dni(n) { return n === 1 ? "deň" : (n >= 2 && n <= 4) ? "dni" : "dní"; }
@@ -10,7 +10,7 @@
     var seria = K.aktualnaSeria(), opak = K.naOpakovanie().length;
     var r = 30, obvod = 2 * Math.PI * r;
     var h = '<div class="obal">' +
-      '<div class="hlavicka"><div class="logo">Syn<b>tax</b></div><span class="medzera"></span>' +
+      '<div class="hlavicka"><div class="logo">Syntax<b>Code</b></div><span class="medzera"></span>' +
       '<span class="chip ohen" title="Séria dní">' + K.ikona.ohen + seria + '</span><span class="chip xp" title="Body XP">' + K.ikona.blesk + s.xp + "</span></div>" +
       '<div class="karta ciel"><svg viewBox="0 0 74 74" aria-hidden="true"><circle cx="37" cy="37" r="' + r + '" fill="none" stroke="var(--surface-2)" stroke-width="9"/>' +
       (pct > 0 ? '<circle cx="37" cy="37" r="' + r + '" fill="none" stroke="' + (pct >= 1 ? "var(--ok)" : "var(--accent)") + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (obvod * pct) + " " + obvod + '" transform="rotate(-90 37 37)"/>' : "") +
@@ -153,7 +153,7 @@
       '<div class="nastavenie"><label for="n-uroven">Vysvetlenia</label><select id="n-uroven"><option value="0">Stručne</option><option value="1">Podrobne</option><option value="2">Do hĺbky</option></select></div>' +
       '<div class="nastavenie"><label>Vymazať celý pokrok</label><button type="button" class="btn sek" data-vymaz style="min-height:38px;padding:6px 12px">Vymazať</button></div></div>' +
       '<div class="potvrd" hidden><b>Naozaj vymazať všetok pokrok?</b><span>Zmažú sa XP, lekcie, testy, séria aj projekty. Toto sa nedá vrátiť.</span><div class="riadok"><button type="button" class="btn sek" data-nie style="flex:1">Nechať</button><button type="button" class="btn zle" data-ano style="flex:1">Vymazať</button></div></div>' +
-      '<p class="tlmene" style="font-size:12.5px;text-align:center;margin:0">Syntax · pokrok sa ukladá len v tomto telefóne</p></div>';
+      '<p class="tlmene" style="font-size:12.5px;text-align:center;margin:0">SyntaxCode · pokrok sa ukladá len v tomto telefóne</p></div>';
     var el = K.el(h);
     var t = el.querySelector("#n-tema"), c = el.querySelector("#n-ciel"), u = el.querySelector("#n-uroven");
     t.value = s.nast.tema; c.value = String(s.nast.ciel); u.value = String(s.nast.uroven);

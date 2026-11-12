@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-// Aplikácia zobrazuje Syntax z assets/web/index.html (kópia priečinka ../web).
+// Aplikácia zobrazuje SyntaxCode z assets/web/index.html (kópia priečinka ../web).
 // Po úprave webu spusti: tool/skopiruj_web.sh
 void main() => runApp(const SyntaxApp());
 
@@ -12,7 +12,7 @@ class SyntaxApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Syntax',
+      title: 'SyntaxCode',
       debugShowCheckedModeBanner: false,
       home: SyntaxObrazovka(),
     );

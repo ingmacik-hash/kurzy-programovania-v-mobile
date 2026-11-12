@@ -1,4 +1,4 @@
-/* Syntax – prehrávač lekcií, testov a opakovania. */
+/* SyntaxCode – prehrávač lekcií, testov a opakovania. */
 (function () {
   var esc = K.esc;
   var POCHVALY = ["Výborne!", "Presne tak!", "Správne!", "Super!", "Paráda!"];

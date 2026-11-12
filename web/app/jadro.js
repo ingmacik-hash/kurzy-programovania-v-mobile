@@ -1,4 +1,4 @@
-/* Syntax – jadro: stav, ukladanie, XP, séria dní, opakovanie, navigácia. */
+/* SyntaxCode – jadro: stav, ukladanie, XP, séria dní, opakovanie, navigácia. */
 var K = window.K = {
   katalog: [],      // zoznam jazykov (kurzy/katalog.js)
   moduly: {},       // kurzId -> [modul, ...]

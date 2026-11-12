@@ -1,4 +1,4 @@
-/* Syntax – editor kódu: farebné zvýraznenie, pruh so znakmi, automatické zatváranie,
+/* SyntaxCode – editor kódu: farebné zvýraznenie, pruh so znakmi, automatické zatváranie,
    náhľad stránky a preklad chýb do slovenčiny. */
 (function () {
   var esc = K.esc;

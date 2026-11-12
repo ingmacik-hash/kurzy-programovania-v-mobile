@@ -1,4 +1,4 @@
-/* Kódovňa – jadro: stav, ukladanie, XP, séria dní, opakovanie, navigácia. */
+/* Syntax – jadro: stav, ukladanie, XP, séria dní, opakovanie, navigácia. */
 var K = window.K = {
   katalog: [],      // zoznam jazykov (kurzy/katalog.js)
   moduly: {},       // kurzId -> [modul, ...]
@@ -31,14 +31,14 @@ K.ikona = {
 };
 
 /* ---------- stav a ukladanie ---------- */
-var KLUC = "kodovna-v1";
+var KLUC = "syntax-v1", STARY_KLUC = "kodovna-v1";
 function novyStav() {
   return { verzia: 1, xp: 0, dni: {}, seria: 0, posledny: null, najdlhsia: 0,
     hotove: {}, testy: {}, opak: {}, projekty: [], kody: {}, odznaky: {}, opravene: 0,
     nast: { tema: "system", ciel: 10, uroven: 1 } };
 }
 K.stav = novyStav();
-try { var ulozene = localStorage.getItem(KLUC); if (ulozene) { var o = JSON.parse(ulozene); if (o && o.verzia === 1) K.stav = Object.assign(novyStav(), o); } } catch (e) {}
+try { var ulozene = localStorage.getItem(KLUC) || localStorage.getItem(STARY_KLUC); if (ulozene) { var o = JSON.parse(ulozene); if (o && o.verzia === 1) K.stav = Object.assign(novyStav(), o); } } catch (e) {}
 K.uloz = function () { try { localStorage.setItem(KLUC, JSON.stringify(K.stav)); } catch (e) {} };
 K.vymaz = function () { K.stav = novyStav(); K.uloz(); K.temu(); };
 

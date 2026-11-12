@@ -1,4 +1,4 @@
-/* Kódovňa – prehrávač lekcií, testov a opakovania. */
+/* Syntax – prehrávač lekcií, testov a opakovania. */
 (function () {
   var esc = K.esc;
   var POCHVALY = ["Výborne!", "Presne tak!", "Správne!", "Super!", "Paráda!"];
@@ -130,7 +130,7 @@
       onZmena: function (s) { chyba.hidden = true; ed && ed.oznacChybu(0); jsChyba = null; nahlad.spusti(s); hotovo(true); } });
     el.insertBefore(ed.el, chyba); el.appendChild(nahlad.el);
     nahlad.spusti(subory, true);
-    function sprava(e) { if (e.data && e.data.kodovnaChyba && e.source === nahlad.iframe.contentWindow) jsChyba = e.data; }
+    function sprava(e) { if (e.data && e.data.syntaxChyba && e.source === nahlad.iframe.contentWindow) jsChyba = e.data; }
     window.addEventListener("message", sprava);
     var nap = el.querySelector("[data-napoveda]");
     if (nap) nap.onclick = function () { var t = el.querySelector("[data-tip]"); t.hidden = false; t.innerHTML = k.napoveda; };
@@ -148,7 +148,7 @@
         }
         jsChyba = null;
         nahlad.over(s, function (doc) {
-          if (jsChyba) { ukazChybu(K.prelozChybu(jsChyba.kodovnaChyba)); cb(false, "JavaScript skončil chybou. Vysvetlenie je nad editorom."); return; }
+          if (jsChyba) { ukazChybu(K.prelozChybu(jsChyba.syntaxChyba)); cb(false, "JavaScript skončil chybou. Vysvetlenie je nad editorom."); return; }
           var m = null;
           try { m = doc ? k.kontrola(doc, s) : "Náhľad sa nenačítal, skús znova."; } catch (e) { m = "Kontrola zlyhala: " + e.message; }
           if (m && pokusy >= 2 && k.riesenie && !el.querySelector("[data-riesenie]")) {

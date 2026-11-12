@@ -2,31 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-// Aplikácia zobrazuje Kódovňu z assets/web/index.html (kópia priečinka ../web).
+// Aplikácia zobrazuje Syntax z assets/web/index.html (kópia priečinka ../web).
 // Po úprave webu spusti: tool/skopiruj_web.sh
-void main() => runApp(const KodovnaApp());
+void main() => runApp(const SyntaxApp());
 
-class KodovnaApp extends StatelessWidget {
-  const KodovnaApp({super.key});
+class SyntaxApp extends StatelessWidget {
+  const SyntaxApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Kódovňa',
+      title: 'Syntax',
       debugShowCheckedModeBanner: false,
-      home: KodovnaObrazovka(),
+      home: SyntaxObrazovka(),
     );
   }
 }
 
-class KodovnaObrazovka extends StatefulWidget {
-  const KodovnaObrazovka({super.key});
+class SyntaxObrazovka extends StatefulWidget {
+  const SyntaxObrazovka({super.key});
 
   @override
-  State<KodovnaObrazovka> createState() => _KodovnaObrazovkaState();
+  State<SyntaxObrazovka> createState() => _SyntaxObrazovkaState();
 }
 
-class _KodovnaObrazovkaState extends State<KodovnaObrazovka> {
+class _SyntaxObrazovkaState extends State<SyntaxObrazovka> {
   late final WebViewController _web;
 
   @override

@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
 <meta charset="utf-8">
-<title>Automatický test Kódovne</title>
+<title>Automatický test Syntaxu</title>
 <!-- Spustenie (Chrome bez okna):
      chrome --headless=new --allow-file-access-from-files --virtual-time-budget=120000 --dump-dom test/automat.html
      Prejde všetky lekcie a testy kurzu HTML správnymi odpoveďami a vypíše výsledky do <pre id="vysledky">. -->
@@ -66,7 +66,7 @@ async function prejdiKroky(w, d, kroky, popis, najdiKrok) {
 
 async function main() {
   var fr = document.getElementById("app");
-  await cakaj(function () { return fr.contentWindow.K && fr.contentWindow.K.katalog.length; });
+  await cakaj(function () { return fr.contentDocument.readyState === "complete" && fr.contentWindow.K && fr.contentWindow.K.katalog.length; });
   var w = fr.contentWindow, K = w.K, d = fr.contentDocument;
   K.vymaz();
   // kontrola HTML – ukážky chybových hlášok
@@ -102,7 +102,7 @@ async function main() {
     }
   }
   log("Spolu XP: " + K.stav.xp + ", séria: " + K.aktualnaSeria() + ", odznaky: " + Object.keys(K.stav.odznaky).join(","));
-  log("Ďalšia položka po dokončení: " + JSON.stringify(K.dalsiaPolozka("html")));
+  log("Ďalšia položka po dokončení: " + (K.dalsiaPolozka("html") ? K.dalsiaPolozka("html").id : "žiadna"));
   // opakovanie: zle zodpovedaná otázka sa má objaviť v opakovaní
   K.chybaVOtazke("html-1-1#2"); log("Na opakovanie: " + K.naOpakovanie().join(","));
   d.getElementById("obrazovka").innerHTML = ""; w.location.hash = "opakovanie";

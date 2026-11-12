@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
 <meta charset="utf-8">
-<title>Snímka obrazovky Kódovne</title>
+<title>Snímka obrazovky Syntaxu</title>
 <!-- Zobrazí aplikáciu v šírke mobilu (412 px) v zadanom stave.
      Parametre: ?hash=lekcia-html-1-2&kroky=8&tema=dark&odpoved=1
      kroky = koľko krokov lekcie preskočiť správnou odpoveďou, odpoved=1 vyplní aj aktuálny krok (bez kontroly). -->
@@ -21,11 +21,11 @@ function vypln(w, d, k) {
 }
 (async function () {
   var fr = document.getElementById("app");
-  await cakaj(function () { return fr.contentWindow.K && fr.contentWindow.K.katalog.length; });
+  await cakaj(function () { return fr.contentDocument.readyState === "complete" && fr.contentWindow.K && fr.contentWindow.K.katalog.length; });
   var w = fr.contentWindow, K = w.K, d = fr.contentDocument;
   K.vymaz();
   if (q.get("tema")) { K.stav.nast.tema = q.get("tema"); K.temu(); }
-  if (q.get("hotove")) K.polozkyKurzu("html").slice(0, +q.get("hotove")).forEach(function (p) { if (p.typ === "lekcia") K.stav.hotove[p.id] = true; });
+  if (q.get("hotove")) K.polozkyKurzu("html").slice(0, +q.get("hotove")).forEach(function (p) { if (p.typ === "lekcia") K.stav.hotove[p.id] = true; else K.stav.testy[p.id] = { preslo: true, best: 100 }; });
   if (q.get("xp")) { K.pridajXP(+q.get("xp")); }
   d.getElementById("obrazovka").innerHTML = "";
   w.location.hash = q.get("hash") || "domov";

@@ -118,7 +118,7 @@
     { typ: "vyklad", nadpis: "Na čo sa HTML hodí",
       text: "<p>HTML použiješ všade, kde treba zobraziť obsah:</p><ul><li><b>webové stránky</b> a e-shopy,</li><li><b>e-maily</b> s obrázkami a tlačidlami,</li><li><b>mobilné aplikácie</b>, ktoré vnútri zobrazujú web (ako táto),</li><li><b>elektronické knihy</b> (formát EPUB je vnútri HTML),</li><li><b>návody a dokumentácia</b>.</li></ul>",
       podrobne: "<p><b>Na čo sa HTML nehodí:</b> na výpočty, rozhodovanie a prácu s údajmi. HTML nevie sčítať dve čísla, nevie povedať „ak je niečo pravda, urob toto“ a nevie si nič zapamätať.</p><p>Preto HTML nie je <b>programovací</b>, ale <b>značkovací</b> jazyk. Programovacie jazyky (JavaScript, Python, C++) majú podmienky, cykly a premenné. HTML len opisuje obsah.</p>",
-      hlbka: "<p>HTML zobrazuje <b>vykresľovacie jadro</b> prehliadača. Chrome, Edge a Opera používajú jadro <b>Blink</b>, Safari jadro <b>WebKit</b> a Firefox jadro <b>Gecko</b>. Jadro prečíta HTML, postaví z neho stromovú štruktúru (DOM), použije štýly CSS a stránku nakreslí.</p><p>V Androide zobrazuje web v aplikáciách súčasť <b>WebView</b>, ktorá je postavená na jadre Chrome. Presne takto beží aj Kódovňa.</p>" },
+      hlbka: "<p>HTML zobrazuje <b>vykresľovacie jadro</b> prehliadača. Chrome, Edge a Opera používajú jadro <b>Blink</b>, Safari jadro <b>WebKit</b> a Firefox jadro <b>Gecko</b>. Jadro prečíta HTML, postaví z neho stromovú štruktúru (DOM), použije štýly CSS a stránku nakreslí.</p><p>V Androide zobrazuje web v aplikáciách súčasť <b>WebView</b>, ktorá je postavená na jadre Chrome. Presne takto beží aj aplikácia Syntax.</p>" },
     { typ: "volba", otazka: "Čo z tohto sa v samotnom HTML <b>nedá</b> urobiť?", moznosti: ["Vypočítať súčet dvoch čísel", "Vložiť obrázok", "Napísať nadpis", "Vytvoriť odkaz na inú stránku"], spravna: 0,
       vysvetlenie: "HTML len opisuje obsah. Počítať vie programovací jazyk, napríklad JavaScript.",
       preco: [null, "Obrázok sa v HTML vkladá značkou <img>.", "Nadpis je jedna zo základných vecí v HTML.", "Odkazy sú podstata HTML, preto sa volá HyperText."] },
@@ -263,7 +263,7 @@
     { typ: "vyklad", nadpis: "Ďalšie značky pre text",
       text: tabulka(["Značka", "Na čo", "Výsledok"], [
         ["<code>&lt;mark&gt;</code>", "zvýraznenie ako fixkou", "Hľadané <mark>slovo</mark>"],
-        ["<code>&lt;small&gt;</code>", "drobné poznámky, autorské práva", "<small>© 2026 Kódovňa</small>"],
+        ["<code>&lt;small&gt;</code>", "drobné poznámky, autorské práva", "<small>© 2026 Syntax</small>"],
         ["<code>&lt;sub&gt;</code>", "dolný index", "H<sub>2</sub>O"],
         ["<code>&lt;sup&gt;</code>", "horný index", "m<sup>2</sup>, 1<sup>.</sup> miesto"],
         ["<code>&lt;del&gt;</code>", "odstránený text", "<del>20 €</del> 15 €"],

@@ -382,7 +382,7 @@
       var r = document.createElement("div"); r.className = "k-" + (e.data.typ || "log"); r.textContent = e.data.syntaxLog; kpre.appendChild(r);
     }
     window.addEventListener("message", log);
-    function nacitaj(subory) { kpre.textContent = ""; konz.hidden = true; fr.srcdoc = K.zostavStranku(subory); }
+    function nacitaj(subory) { kpre.textContent = ""; konz.hidden = !el.classList.contains("len-konzola"); fr.srcdoc = K.zostavStranku(subory); }
     return {
       el: el, iframe: fr,
       spusti: function (subory, hned) {

@@ -20,6 +20,9 @@
   P.rovnakaFarba = function (d, sel, vlastnost, ocakavana) { var v = P.styl(d, sel, vlastnost); return v !== null && v === P.farba(d, ocakavana); };
   P.px = function (d, sel, vlastnost) { return parseFloat(P.styl(d, sel, vlastnost)) || 0; };
   P.vystup = function (d) { return (d.defaultView.__vystup || []).join("\n"); };
+  P.log = function (d) { return d.defaultView.__vystup || []; };
+  /* Vyhodnotí výraz v náhľade (vidí aj premenné let/const z kódu žiaka). */
+  P.js = function (d, vyraz) { try { return d.defaultView.eval(vyraz); } catch (e) { return undefined; } };
   /* Program (Python/C++): riadky výstupu bez prázdnych na konci */
   P.riadky = function (vystup) { return vystup.replace(/\s+$/, "").split("\n").map(function (r) { return r.replace(/\s+$/, ""); }); };
 })();

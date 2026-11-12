@@ -141,6 +141,7 @@
       vystup.el.querySelector(".spustit").onclick = function () { chyba.hidden = true; ed.oznacChybu(0); vystup.spusti(ed.subory()[karty[0]]); };
     } else {
       nahlad = K.Nahlad(k.vyskaNahladu || "180px");
+      if (karty.indexOf("html") < 0 && !k.nahlad) nahlad.el.classList.add("len-konzola");
       el.appendChild(nahlad.el);
       nahlad.spusti(subory, true);
     }

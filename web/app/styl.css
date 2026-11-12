@@ -304,3 +304,5 @@ body.bez-menu #spodna{display:none}
 .kriteria li.nie .znak{background:var(--bad);color:#fff}
 .projekt-obr .lekcia-telo .obal{gap:14px}
 .ziva-ukazka{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:#fff;width:100%;display:block}.kod-obal .kod + .kod{border-radius:0;border-top:1px solid var(--code-line)}
+.len-konzola iframe,.len-konzola > .stitok{display:none}.len-konzola .konzola{border-top:0}.konzola pre:empty::before{content:"Program zatiaľ nič nevypísal. Výpis robí console.log(…).";color:var(--code-muted)}
+.kod.vystup-ukazka{border-radius:0 0 12px 12px;background:#05070c;color:#b5f0b5;border-top:1px solid var(--code-line)}.kod.vystup-ukazka::before{content:"VÝSTUP";display:block;font:700 10.5px var(--f-text);letter-spacing:.07em;color:var(--code-muted);margin-bottom:4px}

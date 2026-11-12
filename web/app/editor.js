@@ -46,10 +46,34 @@
       return span("t-sel", m[5]);
     });
   }
+  var PY_KW = "def|return|if|elif|else|for|while|in|not|and|or|is|break|continue|pass|import|from|as|class|try|except|finally|raise|with|lambda|global|None|True|False|yield|del|assert";
+  var PY_FN = "print|input|int|float|str|len|range|list|dict|set|tuple|abs|round|min|max|sum|sorted|type|bool|enumerate|zip|open";
+  function hlPy(src) {
+    return tokenizuj(src, new RegExp("(#.*)|([fFrRbB]?(?:\"\"\"[\\s\\S]*?(?:\"\"\"|$)|'''[\\s\\S]*?(?:'''|$)|\"(?:\\\\.|[^\"\\\\\\n])*\"?|'(?:\\\\.|[^'\\\\\\n])*'?))|\\b(\\d+\\.?\\d*)\\b|\\b(" + PY_KW + ")\\b|\\b(" + PY_FN + ")\\b", "g"), function (m) {
+      if (m[1]) return span("t-com", m[1]);
+      if (m[2]) return span("t-str", m[2]);
+      if (m[3]) return span("t-num", m[3]);
+      if (m[4]) return span("t-kw", m[4]);
+      return span("t-sel", m[5]);
+    });
+  }
+  var CPP_KW = "int|double|float|char|bool|void|long|short|unsigned|const|auto|string|vector|return|if|else|for|while|do|break|continue|switch|case|default|class|struct|public|private|protected|new|delete|true|false|using|namespace|std|include|nullptr|this|static|template|typename";
+  function hlCpp(src) {
+    return tokenizuj(src, new RegExp("(\\/\\/.*|\\/\\*[\\s\\S]*?(?:\\*\\/|$))|(#\\s*\\w+)|(\"(?:\\\\.|[^\"\\\\\\n])*\"?|'(?:\\\\.|[^'\\\\\\n])*'?|<[a-z_]+>(?=\\s*$))|\\b(\\d+\\.?\\d*)\\b|\\b(" + CPP_KW + ")\\b|\\b(cout|cin|endl|main|printf|getline)\\b", "gm"), function (m) {
+      if (m[1]) return span("t-com", m[1]);
+      if (m[2]) return span("t-tag", m[2]);
+      if (m[3]) return span("t-str", m[3]);
+      if (m[4]) return span("t-num", m[4]);
+      if (m[5]) return span("t-kw", m[5]);
+      return span("t-sel", m[6]);
+    });
+  }
   K.zvyrazni = function (src, jazyk) {
     if (jazyk === "css") return hlCss(src);
     if (jazyk === "js") return hlJs(src);
     if (jazyk === "html") return hlHtml(src);
+    if (jazyk === "py" || jazyk === "python") return hlPy(src);
+    if (jazyk === "cpp") return hlCpp(src);
     return esc(src);
   };
 
@@ -104,8 +128,129 @@
     return "Chyba v JavaScripte: " + sprava;
   };
 
+  /* ---------- chyby Pythonu po slovensky ---------- */
+  var PY_CHYBY = [
+    [/^NameError$/, /name '(.+)' is not defined/, "„$1“ neexistuje. Vytvoril si túto premennú alebo funkciu? Skontroluj preklepy a veľké a malé písmená."],
+    [/^SyntaxError$/, /expected ':'/, "Chýba dvojbodka : na konci riadku (za if, for, while, def…)."],
+    [/^SyntaxError$/, /unterminated string|EOL while scanning|unterminated triple/, "Text nie je uzavretý. Skontroluj, či má úvodzovky na začiatku aj na konci."],
+    [/^SyntaxError$/, /'\(' was never closed|unexpected EOF|was never closed/, "Niektorá zátvorka nie je zatvorená."],
+    [/^SyntaxError$/, /unmatched '(.)'/, "Zátvorka $1 je navyše, nemá svoju otváraciu dvojičku."],
+    [/^SyntaxError$/, /invalid syntax.*Maybe you meant '==' or ':='|cannot assign to/, "Na porovnanie použi ==. Jedno = do premennej ukladá."],
+    [/^(SyntaxError|IndentationError)$/, /expected an indented block/, "Za dvojbodkou musí nasledovať odsadený riadok (4 medzery)."],
+    [/^(SyntaxError|IndentationError)$/, /unexpected indent/, "Tento riadok je odsadený, hoci nemá byť. Zmaž medzery na začiatku."],
+    [/^(SyntaxError|IndentationError)$/, /unindent|indent/, "Odsadenie nesedí. Riadky v jednom bloku musia mať rovnaký počet medzier."],
+    [/^SyntaxError$/, /./, "Python nerozumie zápisu na tomto riadku. Skontroluj dvojbodky, zátvorky, úvodzovky a odsadenie."],
+    [/^TypeError$/, /can only concatenate str|unsupported operand type\(s\) for \+: 'int' and 'str'|unsupported operand type\(s\) for \+: 'str' and 'int'/, "Nedá sa sčítať text a číslo. Číslo premeň na text cez str(…) alebo text na číslo cez int(…)."],
+    [/^TypeError$/, /'(.+)' object is not callable/, "Snažíš sa zavolať niečo, čo nie je funkcia ($1). Nepomenoval si premennú rovnako ako funkciu?"],
+    [/^TypeError$/, /missing (\d+) required positional argument/, "Funkcii chýba $1 vstup (argument). Pozri, koľko ich funkcia potrebuje."],
+    [/^TypeError$/, /takes (\d+) positional arguments? but (\d+) (were|was) given/, "Funkcia čaká $1 vstupy, ale dostala $2."],
+    [/^TypeError$/, /./, "Pracuješ s nesprávnym typom údajov (napr. text namiesto čísla)."],
+    [/^ZeroDivisionError$/, /./, "Delenie nulou. Nulou sa deliť nedá."],
+    [/^ValueError$/, /invalid literal for int\(\).*: '(.*)'/, "„$1“ sa nedá premeniť na celé číslo."],
+    [/^ValueError$/, /could not convert string to float: '(.*)'/, "„$1“ sa nedá premeniť na desatinné číslo."],
+    [/^IndexError$/, /./, "Index je mimo zoznamu. Zoznam s n prvkami má indexy 0 až n-1."],
+    [/^KeyError$/, /(.*)/, "Kľúč $1 v slovníku neexistuje."],
+    [/^AttributeError$/, /'(.+)' object has no attribute '(.+)'/, "Typ $1 nemá $2. Nepreklepol si sa?"],
+    [/^RecursionError$/, /./, "Funkcia volá sama seba donekonečna."],
+  ];
+  K.prelozPyChybu = function (typ, sprava) {
+    for (var i = 0; i < PY_CHYBY.length; i++) {
+      if (!PY_CHYBY[i][0].test(typ)) continue;
+      var m = PY_CHYBY[i][1].exec(sprava); if (m) return PY_CHYBY[i][2].replace(/\$(\d)/g, function (_, n) { return m[+n] || ""; });
+    }
+    return typ + ": " + sprava;
+  };
+
+  /* ---------- chyby C++ (gcc) po slovensky ---------- */
+  var CPP_CHYBY = [
+    [/expected ';' before|expected ';' at end/, "Chýba bodkočiarka ; na konci príkazu (často na riadku vyššie)."],
+    [/'(\w+)' was not declared in this scope/, "„$1“ nie je vytvorené. Vytvor premennú (napr. int $1;), alebo skontroluj preklep. Pri cout/cin/string nezabudni na using namespace std;"],
+    [/'(\w+)' is not a member of 'std'/, "$1 nie je v std. Chýba #include, alebo je preklep."],
+    [/expected '\}' at end of input/, "Chýba zatváracia zložená zátvorka }."],
+    [/expected primary-expression before '(.+)'/, "Pred „$1“ niečo chýba (napr. hodnota alebo premenná)."],
+    [/missing terminating " character|missing terminating ' character/, "Text nie je uzavretý úvodzovkami."],
+    [/invalid conversion from|cannot convert '(.+)' to '(.+)'/, "Nesprávny typ: hodnotu nemožno uložiť do premennej tohto typu."],
+    [/no match for 'operator<<'|no match for 'operator>>'/, "Táto hodnota sa nedá vypísať/načítať cez << alebo >>."],
+    [/redeclaration of|conflicting declaration/, "Premenná s týmto menom už existuje. Druhýkrát ju nevytváraj."],
+    [/assignment of read-only variable '(\w+)'/, "$1 je konštanta (const), nedá sa zmeniť."],
+    [/expected '\)' before|expected '\)'/, "Chýba zatváracia zátvorka )."],
+    [/expected '\(' /, "Chýba otváracia zátvorka (."],
+    [/fatal error: (.+): No such file/, "Knižnica $1 neexistuje. Skontroluj #include."],
+    [/control reaches end of non-void function/, "Funkcia má vrátiť hodnotu, ale chýba return."],
+  ];
+  K.prelozCppChybu = function (text) {
+    var riadky = (text || "").split("\n"), prvy = null;
+    for (var i = 0; i < riadky.length; i++) if (/error:/.test(riadky[i])) { prvy = riadky[i]; break; }
+    if (!prvy) return { sprava: text.trim().split("\n")[0] || "Program sa nepodarilo preložiť.", riadok: 0 };
+    var r = /prog\.cc:(\d+):/.exec(prvy), msg = prvy.replace(/^.*error:\s*/, "");
+    for (var j = 0; j < CPP_CHYBY.length; j++) { var m = CPP_CHYBY[j][0].exec(msg); if (m) return { sprava: CPP_CHYBY[j][1].replace(/\$(\d)/g, function (_, n) { return m[+n] || ""; }), riadok: r ? +r[1] : 0 }; }
+    return { sprava: "Chyba prekladača: " + msg, riadok: r ? +r[1] : 0 };
+  };
+
+  /* ---------- spustenie Pythonu (Brython, beží v telefóne bez internetu) ---------- */
+  var py = { stav: 0, cakaju: [] };
+  function pyInit() {
+    window.pyVystup = function (s) { py.out.push(s); };
+    window.pyChyba = function (t, m, r) { py.chyba = { typ: t, sprava: m, riadok: r }; };
+    window.pyVstupy = [];
+    brython({ debug: 0 });
+    __BRYTHON__.runPythonSource(["import sys, builtins", "from browser import window", "class Vystup:", "  def write(self, s): window.pyVystup(s)", "  def flush(self): pass",
+      "sys.stdout = Vystup()", "sys.stderr = Vystup()",
+      "def vstup(p=''):", "  print(p, end='')", "  v = window.pyVstupy.shift() if window.pyVstupy.length else ''", "  print(v)", "  return v", "builtins.input = vstup",
+      "def spusti(src):", "  try:", "    exec(compile(src, 'program', 'exec'), {'__name__': '__main__'})", "  except SyntaxError as e:", "    window.pyChyba(type(e).__name__, str(e.msg), e.lineno or 0)",
+      "  except BaseException as e:", "    tb = e.__traceback__", "    r = 0", "    while tb is not None:", "      if tb.tb_frame.f_code.co_filename == 'program': r = tb.tb_lineno", "      tb = tb.tb_next",
+      "    window.pyChyba(type(e).__name__, str(e), r)", "window.pySpusti = spusti"].join("\n"));
+  }
+  K.nacitajPython = function (cb) {
+    if (py.stav === 2) return cb(true);
+    py.cakaju.push(cb);
+    if (py.stav === 1) return;
+    py.stav = 1;
+    var subory = ["lib/brython.min.js", "lib/brython_stdlib.js"], i = 0;
+    (function dalsi() {
+      if (i >= subory.length) {
+        try { pyInit(); py.stav = 2; } catch (e) { py.stav = 0; }
+        var c = py.cakaju; py.cakaju = []; c.forEach(function (f) { f(py.stav === 2); }); return;
+      }
+      var s = document.createElement("script"); s.src = subory[i++]; s.onload = dalsi;
+      s.onerror = function () { py.stav = 0; var c = py.cakaju; py.cakaju = []; c.forEach(function (f) { f(false); }); };
+      document.head.appendChild(s);
+    })();
+  };
+  /* cb({vystup, chyba:{typ, sprava, riadok, preklad}}) */
+  K.spustiPython = function (kod, vstupy, cb) {
+    K.nacitajPython(function (ok) {
+      if (!ok) return cb({ vystup: "", chyba: { sprava: "Python sa nepodarilo načítať.", riadok: 0, preklad: "Python sa nepodarilo načítať. Skús aplikáciu reštartovať." } });
+      py.out = []; py.chyba = null; window.pyVstupy = (vstupy || []).slice();
+      setTimeout(function () {
+        try { window.pySpusti(kod); } catch (e) { py.chyba = { typ: "Chyba", sprava: String(e && e.message || e), riadok: 0 }; }
+        var ch = py.chyba; if (ch) ch.preklad = K.prelozPyChybu(ch.typ, ch.sprava);
+        cb({ vystup: py.out.join(""), chyba: ch });
+      }, 10);
+    });
+  };
+
+  /* ---------- spustenie C++ (online prekladač Wandbox, potrebuje internet) ---------- */
+  K.spustiCpp = function (kod, vstup, cb) {
+    var hotovo = false, t = setTimeout(function () { if (!hotovo) { hotovo = true; cb({ vystup: "", siet: true, chyba: { sprava: "Prekladač neodpovedá.", preklad: "Prekladač C++ neodpovedá. Skontroluj internet a skús znova.", riadok: 0 } }); } }, 25000);
+    fetch("https://wandbox.org/api/compile.json", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ compiler: "gcc-13.2.0", code: kod, stdin: vstup || "", options: "c++17" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (hotovo) return; hotovo = true; clearTimeout(t);
+        if (j.compiler_error && /error:/.test(j.compiler_error)) { var p = K.prelozCppChybu(j.compiler_error); return cb({ vystup: "", chyba: { sprava: j.compiler_error, preklad: p.sprava, riadok: p.riadok } }); }
+        var ch = null;
+        if (j.signal) ch = { sprava: j.signal, preklad: /Killed|CPU/.test(j.signal) ? "Program bežal príliš dlho (nekonečný cyklus?) a bol zastavený." : "Program spadol (" + j.signal + "). Často je to zlý index poľa alebo delenie nulou.", riadok: 0 };
+        cb({ vystup: (j.program_output || "") + (j.program_error || ""), chyba: ch });
+      })
+      .catch(function () { if (hotovo) return; hotovo = true; clearTimeout(t); cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: "C++ sa prekladá na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } }); });
+  };
+
   /* ---------- zostavenie stránky pre náhľad ---------- */
-  var CHYBY_SKRIPT = "<script>window.onerror=function(m,s,l){try{parent.postMessage({syntaxChyba:String(m),riadok:l},'*')}catch(e){}" +
+  var CHYBY_SKRIPT = "<script>window.__vystup=[];(function(){function t(x){if(x===undefined)return'undefined';if(typeof x==='string')return x;if(typeof x==='function')return'funkcia '+(x.name||'');try{return JSON.stringify(x)}catch(e){return String(x)}}" +
+    "function f(typ){return function(){var a=[].map.call(arguments,t).join(' ');window.__vystup.push(a);try{parent.postMessage({syntaxLog:a,typ:typ},'*')}catch(e){}}}" +
+    "console.log=f('log');console.info=f('log');console.warn=f('warn');console.error=f('error');window.alert=function(x){console.log('[alert] '+t(x));__ukaz('Upozornenie: '+t(x),4000)}})();" +
+    "window.onerror=function(m,s,l){try{parent.postMessage({syntaxChyba:String(m),riadok:l},'*')}catch(e){}" +
     "var p=document.createElement('pre');p.style.cssText='color:#c0392b;white-space:pre-wrap;font:13px monospace;background:#fde8e6;padding:8px;border-radius:6px';p.textContent='Chyba: '+m;(document.body||document.documentElement).appendChild(p)};" +
     /* Odkazy v náhľade neotvárajú cudzie stránky: kotvy (#…) posunú stránku, ostatné ukážu, kam by viedli. */
     "function __ukaz(x,ms){var b=document.getElementById('__odkaz')||document.createElement('div');b.id='__odkaz';b.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;background:#141725;color:#fff;font:13px system-ui;padding:9px 12px;border-radius:9px;z-index:99999;white-space:pre-wrap';" +
@@ -134,8 +279,10 @@
     html: ["Tab", "<", ">", "/", "=", "\"", "!", "-", "&", ";", "#", "(", ")"],
     css: ["Tab", "{", "}", ":", ";", ".", "#", "-", "%", "(", ")", "\"", ","],
     js: ["Tab", "(", ")", "{", "}", "[", "]", ";", "=", "\"", "'", "+", ".", "<", ">", "!", "&", "|", ","],
+    py: ["Tab", "(", ")", ":", "=", "\"", "'", "[", "]", "{", "}", "+", "-", "*", "/", "<", ">", "#", ","],
+    cpp: ["Tab", ";", "{", "}", "(", ")", "<", ">", "=", "\"", "[", "]", "+", "-", "*", "/", "&", "|", "!", "#", ":", ","],
   };
-  var NAZVY = { html: "HTML", css: "CSS", js: "JS" };
+  var NAZVY = { html: "HTML", css: "CSS", js: "JS", py: "Python", cpp: "C++" };
   var PARY = { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" };
 
   /* opts: { subory:{html,css,js}, karty:["html",...], aktivna, vyska, onZmena(subory) } */
@@ -147,6 +294,7 @@
     var ta = el.querySelector("textarea"), pre = el.querySelector("pre"), code = el.querySelector("code"),
         cisla = el.querySelector(".ed-cisla"), pas = el.querySelector(".ed-chyba-riadok"), znaky = el.querySelector(".znaky"), vnutri = false, chybaRiadok = 0;
 
+    function TAB() { return akt === "py" || akt === "cpp" ? "    " : "  "; }
     el.querySelector(".ed-karty").innerHTML = karty.map(function (k) { return '<button type="button" data-k="' + k + '">' + NAZVY[k] + "</button>"; }).join("");
     function prekresli() {
       code.innerHTML = K.zvyrazni(ta.value, akt) + "\n";
@@ -182,7 +330,7 @@
       if (novyRiadok) {
         var predch = pred.slice(0, -1), riad = predch.slice(predch.lastIndexOf("\n") + 1), odsad = (riad.match(/^[ \t]*/) || [""])[0];
         var otv = akt === "html" ? /<([a-zA-Z][\w-]*)[^<>\/]*>\s*$/.exec(riad) : null;
-        if (/\{\s*$/.test(riad) || (otv && PRAZDNE.indexOf(otv[1].toLowerCase()) < 0)) odsad += "  ";
+        if (/\{\s*$/.test(riad) || (akt === "py" && /:\s*(#.*)?$/.test(riad)) || (otv &&PRAZDNE.indexOf(otv[1].toLowerCase()) < 0)) odsad += TAB();
         if (odsad) { vloz(odsad); return; }
       } else if (d && d.length === 1) {
         if (akt === "html" && d === ">") {
@@ -200,45 +348,81 @@
       zmena();
     });
     ta.addEventListener("scroll", synchronizuj);
-    ta.addEventListener("keydown", function (e) { if (e.key === "Tab") { e.preventDefault(); vloz("  "); } });
+    ta.addEventListener("keydown", function (e) { if (e.key === "Tab") { e.preventDefault(); vloz(TAB()); } });
     znaky.addEventListener("pointerdown", function (e) { if (e.target.closest("button")) e.preventDefault(); });
     znaky.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b) return;
       var z = b.dataset.z;
       if (z === "spat") { ta.focus(); try { document.execCommand("undo"); } catch (er) {} zmena(); return; }
-      vloz(z === "Tab" ? "  " : z);
+      vloz(z === "Tab" ? TAB() : z);
     });
     el.querySelector(".ed-karty").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) nastavKartu(b.dataset.k); });
     nastavKartu(akt);
 
-    return {
+    var api = {
       el: el,
       subory: function () { return subory; },
       nastav: function (nove) { subory = nove; nastavKartu(akt); if (opts.onZmena) opts.onZmena(subory, akt); },
       karta: nastavKartu,
       oznacChybu: function (r) { chybaRiadok = r || 0; synchronizuj(); },
     };
+    el.__ed = api;
+    return api;
   };
 
   /* Náhľad: iframe so stránkou zostavenou zo súborov. */
   K.Nahlad = function (vyska) {
-    var el = K.el('<div class="nahlad"><div class="stitok"><i></i>Výsledok</div><iframe sandbox="allow-scripts allow-same-origin allow-modals" title="Náhľad stránky"></iframe></div>');
-    var fr = el.querySelector("iframe"), tm;
+    var el = K.el('<div class="nahlad"><div class="stitok"><i></i>Výsledok</div><iframe sandbox="allow-scripts allow-same-origin allow-modals" title="Náhľad stránky"></iframe>' +
+      '<div class="konzola" hidden><div class="stitok">Konzola</div><pre></pre></div></div>');
+    var fr = el.querySelector("iframe"), tm, konz = el.querySelector(".konzola"), kpre = konz.querySelector("pre");
     if (vyska) fr.style.setProperty("--vyska-n", vyska);
+    function log(e) {
+      if (!e.data || e.data.syntaxLog === undefined || e.source !== fr.contentWindow) return;
+      konz.hidden = false;
+      var r = document.createElement("div"); r.className = "k-" + (e.data.typ || "log"); r.textContent = e.data.syntaxLog; kpre.appendChild(r);
+    }
+    window.addEventListener("message", log);
+    function nacitaj(subory) { kpre.textContent = ""; konz.hidden = true; fr.srcdoc = K.zostavStranku(subory); }
     return {
       el: el, iframe: fr,
       spusti: function (subory, hned) {
         clearTimeout(tm);
-        var f = function () { fr.srcdoc = K.zostavStranku(subory); };
+        var f = function () { nacitaj(subory); };
         if (hned) f(); else tm = setTimeout(f, 350);
       },
       /* Spustí a po načítaní zavolá cb(document). */
       over: function (subory, cb) {
         clearTimeout(tm);
         fr.onload = function () { fr.onload = null; setTimeout(function () { var d = null; try { d = fr.contentDocument; } catch (e) {} cb(d); }, 60); };
-        fr.srcdoc = K.zostavStranku(subory);
+        nacitaj(subory);
       },
     };
+  };
+
+  /* Výstup programu (Python, C++): voliteľný vstup, tlačidlo Spustiť a text, ktorý program vypísal.
+     opts: { jazyk:"py"|"cpp", vstup:"…" (ak program číta vstup), spusti(): {kod} } */
+  K.Vystup = function (opts) {
+    var el = K.el('<div class="nahlad vystup-panel">' +
+      (opts.vstup !== undefined ? '<label class="vstup"><span class="stitok">Vstup · čo program prečíta (každá hodnota na samostatnom riadku)</span><textarea rows="2" spellcheck="false" autocapitalize="off"></textarea></label>' : "") +
+      '<div class="vystup-hlava"><div class="stitok"><i></i>Výstup</div><button type="button" class="btn sek spustit">▶ Spustiť</button></div><pre class="vystup tlmene">Ťukni na ▶ Spustiť a uvidíš, čo program vypíše.</pre></div>');
+    var pre = el.querySelector("pre"), ta = el.querySelector("textarea"), tl = el.querySelector(".spustit");
+    if (ta) ta.value = opts.vstup;
+    function vstup() { return ta ? ta.value : ""; }
+    function spusti(kod, cb) {
+      tl.disabled = true; pre.className = "vystup tlmene";
+      pre.textContent = opts.jazyk === "cpp" ? "Prekladám a spúšťam na internete…" : (K._pyPripraveny ? "Spúšťam…" : "Pripravujem Python (prvýkrát to chvíľu trvá)…");
+      var hotovo = function (r) {
+        K._pyPripraveny = true; tl.disabled = false;
+        pre.className = "vystup" + (r.chyba ? " s-chybou" : "");
+        pre.textContent = (r.vystup || "") + (r.chyba ? (r.vystup ? "\n" : "") + "⚠ " + (r.chyba.riadok ? "Riadok " + r.chyba.riadok + ": " : "") + r.chyba.preklad : "");
+        if (!r.vystup && !r.chyba) { pre.className = "vystup tlmene"; pre.textContent = "(program nič nevypísal)"; }
+        if (cb) cb(r);
+      };
+      if (opts.jazyk === "cpp") K.spustiCpp(kod, vstup(), hotovo);
+      else K.spustiPython(kod, vstup().split("\n").filter(function (x, i, a) { return x !== "" || i < a.length - 1; }), hotovo);
+    }
+    tl.onclick = function () { if (opts.spusti) spusti(opts.spusti()); };
+    return { el: el, spusti: spusti, vstup: vstup };
   };
 
   /* Statický blok kódu so zvýraznením (v lekciách). */

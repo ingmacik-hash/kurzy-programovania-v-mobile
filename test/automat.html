@@ -47,17 +47,17 @@ async function prejdiKroky(w, d, kroky, popis, najdiKrok) {
     } else if (k.typ === "kod") {
       // najprv pôvodný kód – má zlyhať, a pozrieme sa na hlášku
       hl.click();
-      await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 5000);
+      await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 30000);
       var zl = d.querySelector(".lekcia-dole.zle");
       log("  " + popis + " kód " + n + " so štartovým kódom: " + (zl ? "zamietnuté → " + (d.querySelector(".chyba-box:not([hidden])") ? d.querySelector(".chyba-box").textContent + " | " : "") + d.querySelector(".spatna-vazba p").textContent : "PRIJATÉ"));
       if (zl) hl.click();
       var ta = d.querySelector(".ed textarea");
       if (!k.riesenie) { zle(popis + " krok " + n + ": chýba riešenie"); return; }
-      ta.value = k.riesenie.html; ta.dispatchEvent(new w.Event("input"));
+      var api = d.querySelector(".ed").__ed, nove = JSON.parse(JSON.stringify(api.subory())); Object.keys(k.riesenie).forEach(function (x) { nove[x] = k.riesenie[x]; }); api.nastav(nove);
       await pauza(50);
     }
     hl.click();
-    try { await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 5000); }
+    try { await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 30000); }
     catch (e) { zle(popis + " krok " + n + " (" + k.typ + "): žiadna odozva"); return; }
     if (d.querySelector(".lekcia-dole.zle")) zle(popis + " krok " + n + " (" + k.typ + "): správna odpoveď zamietnutá: " + d.querySelector(".spatna-vazba").textContent);
     hl.click(); await pauza(20);
@@ -68,6 +68,7 @@ async function main() {
   var fr = document.getElementById("app");
   await cakaj(function () { return fr.contentDocument.readyState === "complete" && fr.contentWindow.K && fr.contentWindow.K.katalog.length; });
   var w = fr.contentWindow, K = w.K, d = fr.contentDocument;
+  w.addEventListener("error", function (e) { zle("JS v aplikácii: " + e.message + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno); });
   K.vymaz();
   // kontrola HTML – ukážky chybových hlášok
   ["<p>Ahoj", "<p>Ahoj <em>svet</p></em>", "<h7>Nadpis</h7>", "<p>Text</br></p>", '<a href="x>Odkaz</a>', "<p>OK</p>", "<p>Ahoj <b>svet</p"].forEach(function (s) {
@@ -76,7 +77,11 @@ async function main() {
   log("JS chyba → " + K.prelozChybu("Uncaught ReferenceError: pocet is not defined"));
   log("JS chyba → " + K.prelozChybu("Uncaught TypeError: Cannot read properties of null (reading 'textContent')"));
 
-  var pol = K.polozkyKurzu("html");
+  var len = new URLSearchParams(location.search).get("kurz");
+  var kurzy = K.katalog.filter(function (k) { return K.moduly[k.id] && (!len || len === k.id); }).map(function (k) { return k.id; });
+  log("Kurzy: " + kurzy.join(", "));
+  for (var ki = 0; ki < kurzy.length; ki++) {
+  var kurzId = kurzy[ki], pol = K.polozkyKurzu(kurzId);
   for (var p = 0; p < pol.length; p++) {
     var it = pol[p];
     if (it.typ === "lekcia") {
@@ -85,8 +90,24 @@ async function main() {
       await prejdiKroky(w, d, it.lekcia.kroky, it.id);
       await cakaj(function () { return d.querySelector(".zhrnutie"); }).catch(function () { zle(it.id + ": chýba zhrnutie"); });
       log(it.id + " hotová: " + !!K.stav.hotove[it.id] + ", XP spolu " + K.stav.xp);
+    } else if (it.typ === "zaver") {
+      d.getElementById("obrazovka").innerHTML = ""; w.location.hash = "zaver-" + it.id;
+      await cakaj(function () { return d.querySelector("[data-vyhodnot]"); });
+      d.querySelector("[data-vyhodnot]").click();
+      await cakaj(function () { return d.querySelector(".vysledok-projektu, .lekcia-dole.zle .spatna-vazba:not([hidden])"); }, 30000);
+      var pv = d.querySelector(".vysledok-projektu");
+      log("  " + it.id + " so štartovým kódom: " + (pv ? pv.querySelector(".vysledok-testu").textContent : "nedá sa vyhodnotiť"));
+      if (K.stav.zavery[it.id] && K.stav.zavery[it.id].preslo) zle(it.id + ": štartový kód by nemal prejsť");
+      if (pv) pv.remove();
+      var apiZ = d.querySelector(".ed").__ed, noveZ = JSON.parse(JSON.stringify(apiZ.subory())); Object.keys(it.projekt.riesenie).forEach(function (x) { noveZ[x] = it.projekt.riesenie[x]; }); apiZ.nastav(noveZ);
+      await pauza(50);
+      d.querySelector("[data-vyhodnot]").click();
+      await cakaj(function () { return d.querySelector(".vysledok-projektu"); }, 30000).catch(function () { zle(it.id + ": riešenie sa nedalo vyhodnotiť: " + (d.querySelector(".spatna-vazba") || {}).textContent); });
+      var zz = K.stav.zavery[it.id];
+      if (!zz || zz.best !== 100) zle(it.id + ": vzorové riešenie má " + (zz ? zz.best : "?") + " % – nesplnené body: " + [].map.call(d.querySelectorAll(".kriteria li.nie"), function (li) { return li.textContent; }).join(" | "));
+      log(kurzId + " projekt " + it.id + ": " + (zz ? zz.best : "?") + " %, splnený: " + !!(zz && zz.preslo));
     } else {
-      d.getElementById("obrazovka").innerHTML = ""; w.location.hash = "test-html-" + it.modul.cislo;
+      d.getElementById("obrazovka").innerHTML = ""; w.location.hash = "test-" + kurzId + "-" + it.modul.cislo;
       await cakaj(function () { return d.querySelector("[data-zacat]"); });
       d.querySelector("[data-zacat]").click();
       await cakaj(function () { return d.querySelector("[data-hlavne]"); });
@@ -98,11 +119,12 @@ async function main() {
         return kand[0];
       });
       await cakaj(function () { return d.querySelector(".vysledok-testu"); }).catch(function () { zle("test: chýba výsledok"); });
-      log("test modulu " + it.modul.cislo + ": " + (d.querySelector(".vysledok-testu") || {}).textContent + ", prešiel: " + (K.stav.testy[it.id] && K.stav.testy[it.id].preslo));
+      log(kurzId + " test modulu " + it.modul.cislo + ": " + (d.querySelector(".vysledok-testu") || {}).textContent + ", prešiel: " + (K.stav.testy[it.id] && K.stav.testy[it.id].preslo));
     }
   }
+  }
   log("Spolu XP: " + K.stav.xp + ", séria: " + K.aktualnaSeria() + ", odznaky: " + Object.keys(K.stav.odznaky).join(","));
-  log("Ďalšia položka po dokončení: " + (K.dalsiaPolozka("html") ? K.dalsiaPolozka("html").id : "žiadna"));
+  kurzy.forEach(function (id) { var dp = K.dalsiaPolozka(id); log("Ďalšia položka v " + id + " po dokončení: " + (dp ? dp.id : "žiadna")); });
   // opakovanie: zle zodpovedaná otázka sa má objaviť v opakovaní
   K.chybaVOtazke("html-1-1#2"); log("Na opakovanie: " + K.naOpakovanie().join(","));
   d.getElementById("obrazovka").innerHTML = ""; w.location.hash = "opakovanie";

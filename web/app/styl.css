@@ -281,3 +281,25 @@ body.bez-menu #spodna{display:none}
 
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:50;animation:vsun .25s ease;max-width:calc(100% - 32px)}
 .vysledok table{border-collapse:collapse}.vysledok th,.vysledok td{border:1px solid #999;padding:4px 8px}.vysledok th{background:#eee}.vysledok caption{font-weight:700;padding-bottom:4px}
+.konzola{border-top:1px solid var(--line);background:var(--code-bg);padding:8px 12px 10px}
+.konzola .stitok{color:var(--code-muted)}
+.konzola pre,.vystup{margin:4px 0 0;font:13px/1.55 var(--f-code);color:var(--code-text);white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto}
+.konzola .k-error{color:#ff8a80}.konzola .k-warn{color:#ffd180}
+.vystup-panel{background:var(--code-bg);padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.vystup-panel .stitok{color:var(--code-muted)}
+.vystup-hlava{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vystup-hlava .spustit{min-height:36px;padding:5px 14px;font-size:14px}
+.vystup{min-height:44px;margin:0}
+.vystup.tlmene{color:var(--code-muted)}
+.vystup.s-chybou{color:var(--code-text)}
+.vstup{display:flex;flex-direction:column;gap:4px}
+.vstup textarea{background:rgba(255,255,255,.06);border:1px solid var(--code-line);border-radius:8px;color:var(--code-text);font:14px/1.5 var(--f-code);padding:6px 10px;resize:vertical}
+.konzola .stitok,.vystup-panel .stitok{padding:0;background:none}.vystup-panel{border-color:var(--code-line)}
+.kriteria ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.kriteria li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+.kriteria .znak{flex:0 0 24px;height:24px;border-radius:7px;background:var(--surface-2);color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px}
+.kriteria li span:nth-child(2){flex:1;min-width:0}
+.kriteria .body{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.kriteria li.ok .znak{background:var(--ok);color:#fff}
+.kriteria li.nie .znak{background:var(--bad);color:#fff}
+.projekt-obr .lekcia-telo .obal{gap:14px}

@@ -28,17 +28,18 @@ K.ikona = {
   opak: '<svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/></svg>',
   hladat: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
   kos: '<svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  projekt: '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg>',
 };
 
 /* ---------- stav a ukladanie ---------- */
 var KLUC = "syntax-v1", STARY_KLUC = "kodovna-v1";
 function novyStav() {
   return { verzia: 1, xp: 0, dni: {}, seria: 0, posledny: null, najdlhsia: 0,
-    hotove: {}, testy: {}, opak: {}, projekty: [], kody: {}, odznaky: {}, opravene: 0,
+    hotove: {}, testy: {}, opak: {}, projekty: [], kody: {}, odznaky: {}, opravene: 0, zavery: {}, zaverKod: {},
     nast: { tema: "system", ciel: 10, uroven: 1 } };
 }
 K.stav = novyStav();
-try { var ulozene = localStorage.getItem(KLUC) || localStorage.getItem(STARY_KLUC); if (ulozene) { var o = JSON.parse(ulozene); if (o && o.verzia === 1) K.stav = Object.assign(novyStav(), o); } } catch (e) {}
+try { var ulozene = localStorage.getItem(KLUC) || localStorage.getItem(STARY_KLUC); if (ulozene) { var o = JSON.parse(ulozene); if (o && o.verzia === 1) { K.stav = Object.assign(novyStav(), o); K.stav.zavery = K.stav.zavery || {}; K.stav.zaverKod = K.stav.zaverKod || {}; } } } catch (e) {}
 K.uloz = function () { try { localStorage.setItem(KLUC, JSON.stringify(K.stav)); } catch (e) {} };
 K.vymaz = function () { K.stav = novyStav(); K.uloz(); K.temu(); };
 
@@ -64,6 +65,9 @@ K.registrujModul = function (kurzId, modul) {
   (K.moduly[kurzId] = K.moduly[kurzId] || []).push(modul);
   K.moduly[kurzId].sort(function (a, b) { return a.cislo - b.cislo; });
 };
+K.zavery = {};
+K.registrujZaver = function (kurzId, projekty) { K.zavery[kurzId] = (K.zavery[kurzId] || []).concat(projekty); };
+K.projekt = function (id) { var k = id.split("-")[0]; return (K.zavery[k] || []).filter(function (p) { return p.id === id; })[0] || null; };
 K.registrujSlovnik = function (kurzId, hesla) { K.slovnik[kurzId] = (K.slovnik[kurzId] || []).concat(hesla); };
 K.kurz = function (id) { for (var i = 0; i < K.katalog.length; i++) if (K.katalog[i].id === id) return K.katalog[i]; return null; };
 K.lekcia = function (id) {
@@ -81,9 +85,10 @@ K.polozkyKurzu = function (kurzId) {
     m.lekcie.forEach(function (l) { out.push({ typ: "lekcia", id: l.id, modul: m, lekcia: l }); });
     if (m.test) out.push({ typ: "test", id: kurzId + "-test-" + m.cislo, modul: m });
   });
+  (K.zavery[kurzId] || []).forEach(function (p) { out.push({ typ: "zaver", id: p.id, projekt: p }); });
   return out;
 };
-K.jeHotove = function (p) { return p.typ === "lekcia" ? !!K.stav.hotove[p.id] : !!(K.stav.testy[p.id] && K.stav.testy[p.id].preslo); };
+K.jeHotove = function (p) { if (p.typ === "zaver") return !!(K.stav.zavery[p.id] && K.stav.zavery[p.id].preslo); return p.typ === "lekcia" ? !!K.stav.hotove[p.id] : !!(K.stav.testy[p.id] && K.stav.testy[p.id].preslo); };
 K.dalsiaPolozka = function (kurzId) {
   var pol = K.polozkyKurzu(kurzId);
   for (var i = 0; i < pol.length; i++) if (!K.jeHotove(pol[i])) return pol[i];
@@ -91,6 +96,8 @@ K.dalsiaPolozka = function (kurzId) {
 };
 K.jeOdomknute = function (kurzId, id) {
   var pol = K.polozkyKurzu(kurzId);
+  var ciel = pol.filter(function (p) { return p.id === id; })[0];
+  if (ciel && ciel.typ === "zaver") return pol.every(function (p) { return p.typ === "zaver" || K.jeHotove(p); });
   for (var i = 0; i < pol.length; i++) { if (pol[i].id === id) return true; if (!K.jeHotove(pol[i])) return false; }
   return false;
 };

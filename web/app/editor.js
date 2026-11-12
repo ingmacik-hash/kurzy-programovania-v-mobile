@@ -182,7 +182,7 @@
     var riadky = (text || "").split("\n"), prvy = null;
     for (var i = 0; i < riadky.length; i++) if (/error:/.test(riadky[i])) { prvy = riadky[i]; break; }
     if (!prvy) return { sprava: text.trim().split("\n")[0] || "Program sa nepodarilo preložiť.", riadok: 0 };
-    var r = /prog\.cc:(\d+):/.exec(prvy), msg = prvy.replace(/^.*error:\s*/, "");
+    var r = /(?:prog\.cc|<source>|example\.cpp):(\d+):/.exec(prvy), msg = prvy.replace(/^.*error:\s*/, "");
     for (var j = 0; j < CPP_CHYBY.length; j++) { var m = CPP_CHYBY[j][0].exec(msg); if (m) return { sprava: CPP_CHYBY[j][1].replace(/\$(\d)/g, function (_, n) { return m[+n] || ""; }), riadok: r ? +r[1] : 0 }; }
     return { sprava: "Chyba prekladača: " + msg, riadok: r ? +r[1] : 0 };
   };
@@ -192,11 +192,11 @@
   function pyInit() {
     window.pyVystup = function (s) { py.out.push(s); };
     window.pyChyba = function (t, m, r) { py.chyba = { typ: t, sprava: m, riadok: r }; };
-    window.pyVstupy = [];
+    window.pyVstupy = []; window.pyCitaj = function () { return window.pyVstupy.length ? String(window.pyVstupy.shift()) : ""; };
     brython({ debug: 0 });
     __BRYTHON__.runPythonSource(["import sys, builtins", "from browser import window", "class Vystup:", "  def write(self, s): window.pyVystup(s)", "  def flush(self): pass",
       "sys.stdout = Vystup()", "sys.stderr = Vystup()",
-      "def vstup(p=''):", "  print(p, end='')", "  v = window.pyVstupy.shift() if window.pyVstupy.length else ''", "  print(v)", "  return v", "builtins.input = vstup",
+      "def vstup(p=''):", "  print(p, end='')", "  v = window.pyCitaj()", "  print(v)", "  return v", "builtins.input = vstup",
       "def spusti(src):", "  try:", "    exec(compile(src, 'program', 'exec'), {'__name__': '__main__'})", "  except SyntaxError as e:", "    window.pyChyba(type(e).__name__, str(e.msg), e.lineno or 0)",
       "  except BaseException as e:", "    tb = e.__traceback__", "    r = 0", "    while tb is not None:", "      if tb.tb_frame.f_code.co_filename == 'program': r = tb.tb_lineno", "      tb = tb.tb_next",
       "    window.pyChyba(type(e).__name__, str(e), r)", "window.pySpusti = spusti"].join("\n"));
@@ -230,20 +230,52 @@
     });
   };
 
-  /* ---------- spustenie C++ (online prekladač Wandbox, potrebuje internet) ---------- */
-  K.spustiCpp = function (kod, vstup, cb) {
-    var hotovo = false, t = setTimeout(function () { if (!hotovo) { hotovo = true; cb({ vystup: "", siet: true, chyba: { sprava: "Prekladač neodpovedá.", preklad: "Prekladač C++ neodpovedá. Skontroluj internet a skús znova.", riadok: 0 } }); } }, 25000);
-    fetch("https://wandbox.org/api/compile.json", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ compiler: "gcc-13.2.0", code: kod, stdin: vstup || "", options: "c++17" }) })
-      .then(function (r) { return r.json(); })
+  /* ---------- spustenie C++ (online prekladač, potrebuje internet) ---------- */
+  /* Najprv Compiler Explorer (godbolt.org), pri výpadku Wandbox (wandbox.org). */
+  function bezFarieb(s) { return String(s || "").replace(/\x1b\[[0-9;]*[mK]/g, ""); }
+  function texty(a) { return (a || []).map(function (x) { return x.text; }).join("\n"); }
+  function godbolt(kod, vstup) {
+    return fetch("https://godbolt.org/api/compiler/g132/compile", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ source: kod, lang: "c++", allowStoreCodeDebug: false, options: { userArguments: "-std=c++17 -O1", executeParameters: { args: [], stdin: vstup || "" }, compilerOptions: { executorRequest: true }, filters: { execute: true }, tools: [], libraries: [] } }) })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
       .then(function (j) {
+        var b = j.buildResult || {};
+        if (b.code && b.code !== 0) { var e = bezFarieb(texty(b.stderr)); return { chybaPrekladu: e || "Program sa nepodarilo preložiť." }; }
+        if (!j.didExecute) throw new Error("nespustené");
+        return { vystup: bezFarieb(texty(j.stdout)), stderr: bezFarieb(texty(j.stderr)), casovyLimit: !!j.timedOut, kod: j.code };
+      });
+  }
+  function wandbox(kod, vstup, pokus) {
+    return fetch("https://wandbox.org/api/compile.json", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ compiler: "gcc-13.2.0", code: kod, stdin: vstup || "", options: "c++17" }) })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (j) {
+        var vsetko = (j.compiler_error || "") + (j.program_error || "") + (j.compiler_message || "");
+        if (/crun:|Resource temporarily unavailable/.test(vsetko)) {
+          if ((pokus || 0) < 2) return new Promise(function (ok) { setTimeout(ok, 1200); }).then(function () { return wandbox(kod, vstup, (pokus || 0) + 1); });
+          throw new Error("preťažené");
+        }
+        if (j.compiler_error && /error:/.test(j.compiler_error)) return { chybaPrekladu: j.compiler_error };
+        return { vystup: j.program_output || "", stderr: j.program_error || "", signal: j.signal, kod: +j.status || 0 };
+      });
+  }
+  K.spustiCpp = function (kod, vstup, cb) {
+    var hotovo = false;
+    var t = setTimeout(function () { if (!hotovo) { hotovo = true; cb({ vystup: "", siet: true, chyba: { sprava: "Prekladač neodpovedá.", preklad: "Prekladač C++ neodpovedá. Skontroluj internet a skús znova.", riadok: 0 } }); } }, 40000);
+    function koniec(v) {
+      if (hotovo) return; hotovo = true; clearTimeout(t);
+      if (v.chybaPrekladu) { var p = K.prelozCppChybu(v.chybaPrekladu); return cb({ vystup: "", chyba: { sprava: v.chybaPrekladu, preklad: p.sprava, riadok: p.riadok } }); }
+      var ch = null;
+      if (v.casovyLimit || /Killed|CPU/.test(v.signal || "")) ch = { sprava: "timeout", preklad: "Program bežal príliš dlho (nekonečný cyklus?) a bol zastavený.", riadok: 0 };
+      else if (v.signal || (v.kod && v.kod > 128)) ch = { sprava: String(v.signal || v.kod), preklad: "Program spadol počas behu. Často je to index mimo poľa alebo delenie nulou.", riadok: 0 };
+      cb({ vystup: v.vystup + (v.stderr ? (v.vystup ? "\n" : "") + v.stderr : ""), chyba: ch });
+    }
+    godbolt(kod, vstup).then(koniec).catch(function () {
+      wandbox(kod, vstup).then(koniec).catch(function () {
         if (hotovo) return; hotovo = true; clearTimeout(t);
-        if (j.compiler_error && /error:/.test(j.compiler_error)) { var p = K.prelozCppChybu(j.compiler_error); return cb({ vystup: "", chyba: { sprava: j.compiler_error, preklad: p.sprava, riadok: p.riadok } }); }
-        var ch = null;
-        if (j.signal) ch = { sprava: j.signal, preklad: /Killed|CPU/.test(j.signal) ? "Program bežal príliš dlho (nekonečný cyklus?) a bol zastavený." : "Program spadol (" + j.signal + "). Často je to zlý index poľa alebo delenie nulou.", riadok: 0 };
-        cb({ vystup: (j.program_output || "") + (j.program_error || ""), chyba: ch });
-      })
-      .catch(function () { if (hotovo) return; hotovo = true; clearTimeout(t); cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: "C++ sa prekladá na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } }); });
+        cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: "C++ sa prekladá na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } });
+      });
+    });
   };
 
   /* ---------- zostavenie stránky pre náhľad ---------- */
@@ -403,7 +435,7 @@
      opts: { jazyk:"py"|"cpp", vstup:"…" (ak program číta vstup), spusti(): {kod} } */
   K.Vystup = function (opts) {
     var el = K.el('<div class="nahlad vystup-panel">' +
-      (opts.vstup !== undefined ? '<label class="vstup"><span class="stitok">Vstup · čo program prečíta (každá hodnota na samostatnom riadku)</span><textarea rows="2" spellcheck="false" autocapitalize="off"></textarea></label>' : "") +
+      (opts.vstup !== undefined ? '<label class="vstup"><span class="stitok">Vstup · každá hodnota na novom riadku</span><textarea rows="2" spellcheck="false" autocapitalize="off"></textarea></label>' : "") +
       '<div class="vystup-hlava"><div class="stitok"><i></i>Výstup</div><button type="button" class="btn sek spustit">▶ Spustiť</button></div><pre class="vystup tlmene">Ťukni na ▶ Spustiť a uvidíš, čo program vypíše.</pre></div>');
     var pre = el.querySelector("pre"), ta = el.querySelector("textarea"), tl = el.querySelector(".spustit");
     if (ta) ta.value = opts.vstup;

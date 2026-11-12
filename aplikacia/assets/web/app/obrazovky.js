@@ -21,8 +21,8 @@
     var posl = posledny();
     if (posl) {
       var k = K.kurz(posl.kurz), d = K.dalsiaPolozka(posl.kurz), pk = K.pokrokKurzu(posl.kurz);
-      if (d) h += '<div class="karta pokracuj" style="' + farby(k) + '"><span class="stitok">Pokračuj · ' + esc(k.nazov) + "</span><h2>" + esc(d.typ === "test" ? "Test: " + d.modul.nazov : d.lekcia.nazov) + "</h2>" +
-        '<div class="pruh"><i style="width:' + pk.pct + '%"></i></div><a class="btn plna" href="#' + (d.typ === "test" ? "test-" + posl.kurz + "-" + d.modul.cislo : "lekcia-" + d.id) + '">' + K.ikona.hrat.replace("<svg", '<svg width="18" height="18" fill="currentColor"') + "Pokračovať</a></div>";
+      if (d) h += '<div class="karta pokracuj" style="' + farby(k) + '"><span class="stitok">Pokračuj · ' + esc(k.nazov) + "</span><h2>" + esc(d.typ === "test" ? "Test: " + d.modul.nazov : d.typ === "zaver" ? "Projekt: " + d.projekt.nazov : d.lekcia.nazov) + "</h2>" +
+        '<div class="pruh"><i style="width:' + pk.pct + '%"></i></div><a class="btn plna" href="#' + (d.typ === "test" ? "test-" + posl.kurz + "-" + d.modul.cislo : d.typ === "zaver" ? "zaver-" + d.id : "lekcia-" + d.id) + '">' + K.ikona.hrat.replace("<svg", '<svg width="18" height="18" fill="currentColor"') + "Pokračovať</a></div>";
     }
     if (opak) h += '<a class="karta riadok" href="#opakovanie" style="text-decoration:none;color:var(--text)"><span class="ikona-btn" style="background:var(--flame-bg);color:var(--flame)">' + K.ikona.opak + '</span><div class="medzera"><b>Opakovanie</b><div class="tlmene" style="font-size:14px">' + opak + " " + (opak === 1 ? "otázka čaká" : opak < 5 ? "otázky čakajú" : "otázok čaká") + "</div></div><span class=\"tlmene\">›</span></a>";
 
@@ -65,7 +65,18 @@
       }
       h += "</div></section>";
     });
-    var plan = (k.plan || []).filter(function (p, i) { return i >= mod.length; });
+    var zav = K.zavery[id] || [];
+    if (zav.length) {
+      var odomZ = K.jeOdomknute(id, zav[0].id);
+      h += '<section class="modul"><div class="modul-hlava"><span class="stitok">Na záver</span><h2>Záverečné projekty</h2></div><p class="tlmene" style="margin:-6px 0 0;font-size:14px">' +
+        (odomZ ? "Vytvor skutočný projekt. Aplikácia ho vyhodnotí podľa bodov zadania. Na splnenie treba aspoň 70 %." : "Odomknú sa po dokončení všetkých modulov.") + '</p><div class="cesta">';
+      zav.forEach(function (p) {
+        var z = K.stav.zavery[p.id], ok = z && z.preslo;
+        h += '<a class="uzol projekt-uzol ' + (ok ? "hotovo" : odomZ ? "aktualna" : "zamknuta") + '" href="#zaver-' + p.id + '"' + (odomZ ? "" : ' aria-disabled="true" tabindex="-1"') + '><span class="kruh">' + (ok ? K.ikona.fajka : odomZ ? K.ikona.projekt : K.ikona.zamok) + '</span><span class="txt"><b>' + esc(p.nazov) + "</b><small>" + p.kriteria.length + " bodov hodnotenia" + (z ? " · najlepšie " + z.best + " %" : " · ~" + (p.minut || 20) + " min") + "</small></span></a>";
+      });
+      h += "</div></section>";
+    }
+    var plan = (k.plan || []).filter(function (p, i) { return i >= mod.length && !(zav.length && /^Záverečné/.test(p)); });
     if (plan.length) h += '<section class="modul"><div class="modul-hlava"><span class="stitok">Pripravujeme</span></div><div class="plan">' +
       plan.map(function (p) { return "<div>" + K.ikona.zamok.replace("<svg", '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"') + "<span><b>" + esc(p) + "</b></span></div>"; }).join("") + "</div></section>";
     h += "</div></div>";

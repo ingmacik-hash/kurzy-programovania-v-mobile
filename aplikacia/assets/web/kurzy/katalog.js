@@ -4,7 +4,6 @@ K.registrujKurz({
   podtitul: "Kostra každej webovej stránky",
   popis: "Jazyk, ktorým sa píše obsah webových stránok: nadpisy, texty, obrázky, odkazy, tabuľky a formuláre. Je to prvý krok pre každého, kto chce robiť web.",
   pouzitie: ["webové stránky", "e-maily", "mobilné aplikácie", "dokumentácia"],
-  planLekcii: 36,
   plan: ["Modul 1 · Základy HTML", "Modul 2 · Odkazy a obrázky", "Modul 3 · Zoznamy a tabuľky", "Modul 4 · Formuláre", "Modul 5 · Sémantika a štruktúra stránky", "Záverečné projekty · Osobná stránka, Recept, Prihláška"],
 });
 K.registrujKurz({

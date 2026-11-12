@@ -120,50 +120,85 @@
     };
   };
 
-  TYPY.kod = function (k, hotovo) {
-    var subory = { html: (k.start && k.start.html) || "", css: (k.start && k.start.css) || "", js: (k.start && k.start.js) || "" };
+  /* Úloha s editorom. Webové jazyky (html/css/js) sa kontrolujú v náhľade: kontrola(document, subory).
+     Programy (py, cpp) sa spustia a kontroluje sa ich výstup: kontrola(vystup, kod, vysledok). */
+  K.UlohaKod = function (k, hotovo, nastavenia) {
+    nastavenia = nastavenia || {};
+    var karty = k.karty || ["html"], program = karty[0] === "py" || karty[0] === "cpp";
+    var start = {}; ["html", "css", "js", "py", "cpp"].forEach(function (x) { start[x] = (k.start && k.start[x]) || ""; });
+    var subory = nastavenia.subory || JSON.parse(JSON.stringify(start));
     var el = K.el('<div class="editor-krok"><div class="zadanie"></div><div class="chyba-box" hidden></div></div>');
-    el.querySelector(".zadanie").innerHTML = "<b>Úloha:</b> " + k.zadanie + (k.napoveda ? ' <button type="button" class="btn sek" data-napoveda style="min-height:34px;padding:5px 12px;font-size:13.5px;margin-top:8px;display:flex">Nápoveda</button><div class="tip" data-tip hidden style="margin-top:8px"></div>' : "");
-    var chyba = el.querySelector(".chyba-box"), jsChyba = null, pokusy = 0;
-    var nahlad = K.Nahlad(k.vyskaNahladu || "180px");
-    var ed = K.Editor({ subory: subory, karty: k.karty || ["html"], aktivna: k.aktivna, vyska: k.vyska || "200px",
-      onZmena: function (s) { chyba.hidden = true; ed && ed.oznacChybu(0); jsChyba = null; nahlad.spusti(s); hotovo(true); } });
-    el.insertBefore(ed.el, chyba); el.appendChild(nahlad.el);
-    nahlad.spusti(subory, true);
-    function sprava(e) { if (e.data && e.data.syntaxChyba && e.source === nahlad.iframe.contentWindow) jsChyba = e.data; }
+    el.querySelector(".zadanie").innerHTML = (nastavenia.bezNadpisu ? "" : "<b>Úloha:</b> ") + k.zadanie + (k.napoveda ? ' <button type="button" class="btn sek" data-napoveda style="min-height:34px;padding:5px 12px;font-size:13.5px;margin-top:8px;display:flex">Nápoveda</button><div class="tip" data-tip hidden style="margin-top:8px"></div>' : "");
+    var chyba = el.querySelector(".chyba-box"), jsChyba = null, pokusy = 0, nahlad = null, vystup = null, ed;
+    function zmenene(s) { chyba.hidden = true; ed && ed.oznacChybu(0); jsChyba = null; if (nahlad) nahlad.spusti(s); if (nastavenia.onZmena) nastavenia.onZmena(s); hotovo(true); }
+    ed = K.Editor({ subory: subory, karty: karty, aktivna: k.aktivna, vyska: k.vyska || "200px", onZmena: zmenene });
+    el.insertBefore(ed.el, chyba);
+    if (program) {
+      vystup = K.Vystup({ jazyk: karty[0], vstup: k.vstup, spusti: function () { chyba.hidden = true; ed.oznacChybu(0); return ed.subory()[karty[0]]; } });
+      var povodne = vystup.spusti;
+      vystup.spusti = function (kod, cb) { povodne(kod, function (r) { if (r.chyba && r.chyba.riadok) ed.oznacChybu(r.chyba.riadok); if (cb) cb(r); }); };
+      el.appendChild(vystup.el);
+      vystup.el.querySelector(".spustit").onclick = function () { chyba.hidden = true; ed.oznacChybu(0); vystup.spusti(ed.subory()[karty[0]]); };
+    } else {
+      nahlad = K.Nahlad(k.vyskaNahladu || "180px");
+      if (karty.indexOf("html") < 0 && !k.nahlad) nahlad.el.classList.add("len-konzola");
+      el.appendChild(nahlad.el);
+      nahlad.spusti(subory, true);
+    }
+    function sprava(e) { if (nahlad && e.data && e.data.syntaxChyba && e.source === nahlad.iframe.contentWindow) jsChyba = e.data; }
     window.addEventListener("message", sprava);
     var nap = el.querySelector("[data-napoveda]");
     if (nap) nap.onclick = function () { var t = el.querySelector("[data-tip]"); t.hidden = false; t.innerHTML = k.napoveda; };
     function ukazChybu(text) { chyba.hidden = false; chyba.innerHTML = "<b>!</b><span>" + esc(text) + "</span>"; }
+    function ponukniRiesenie(m) {
+      if (m && pokusy >= 2 && k.riesenie && !el.querySelector("[data-riesenie]")) {
+        var b = K.el('<button type="button" class="btn sek" data-riesenie style="min-height:34px;padding:5px 12px;font-size:13.5px;margin-top:8px;display:flex">Ukázať riešenie</button>');
+        b.onclick = function () { b.remove(); var n = JSON.parse(JSON.stringify(start)); Object.keys(k.riesenie).forEach(function (x) { n[x] = k.riesenie[x]; }); ed.nastav(n); };
+        el.querySelector(".zadanie").appendChild(b);
+        return m + " Ak si nevieš rady, môžeš si pozrieť riešenie.";
+      }
+      return m;
+    }
     hotovo(true);
     return {
-      el: el, xp: XP.kod,
+      el: el, xp: XP.kod, editor: ed,
       upratat: function () { window.removeEventListener("message", sprava); },
+      /* cb(ok, sprava, detail) – detail = document (web) alebo výsledok programu */
       skontroluj: function (cb) {
         pokusy++;
         var s = ed.subory();
-        if ((k.karty || ["html"]).indexOf("html") >= 0) {
+        if (program) {
+          vystup.spusti(s[karty[0]], function (r) {
+            if (r.chyba) { ukazChybu((r.chyba.riadok ? "Riadok " + r.chyba.riadok + ": " : "") + r.chyba.preklad); cb(false, r.siet ? "Program sa nedal spustiť, lebo chýba internet." : "Program skončil chybou. Vysvetlenie je nad editorom.", r); return; }
+            var m = null;
+            try { m = k.kontrola(r.vystup || "", s[karty[0]], r); } catch (e) { m = "Kontrola zlyhala: " + e.message; }
+            m = ponukniRiesenie(m);
+            cb(!m, m || k.vysvetlenie || "Funguje to!", r);
+          });
+          return;
+        }
+        if (karty.indexOf("html") >= 0) {
           var h = K.skontrolujHtml(s.html);
           if (h) { ed.karta("html"); ed.oznacChybu(h.riadok); ukazChybu(h.sprava); cb(false, "V HTML je chyba. Pozri červený riadok v editore."); return; }
         }
         jsChyba = null;
         nahlad.over(s, function (doc) {
-          if (jsChyba) { ukazChybu(K.prelozChybu(jsChyba.syntaxChyba)); cb(false, "JavaScript skončil chybou. Vysvetlenie je nad editorom."); return; }
+          if (jsChyba) {
+            if (karty.indexOf("js") >= 0 && jsChyba.riadok) { ed.karta("js"); }
+            ukazChybu(K.prelozChybu(jsChyba.syntaxChyba)); cb(false, "JavaScript skončil chybou. Vysvetlenie je nad editorom."); return;
+          }
           var m = null;
           try { m = doc ? k.kontrola(doc, s) : "Náhľad sa nenačítal, skús znova."; } catch (e) { m = "Kontrola zlyhala: " + e.message; }
-          if (m && pokusy >= 2 && k.riesenie && !el.querySelector("[data-riesenie]")) {
-            var b = K.el('<button type="button" class="btn sek" data-riesenie style="min-height:34px;padding:5px 12px;font-size:13.5px;margin-top:8px;display:flex">Ukázať riešenie</button>');
-            b.onclick = function () { b.remove(); ed.nastav({ html: k.riesenie.html || "", css: k.riesenie.css || "", js: k.riesenie.js || "" }); };
-            el.querySelector(".zadanie").appendChild(b);
-            m += " Ak si nevieš rady, môžeš si pozrieť riešenie.";
-          }
-          cb(!m, m || k.vysvetlenie || "Funguje to!");
+          m = ponukniRiesenie(m);
+          cb(!m, m || k.vysvetlenie || "Funguje to!", doc);
         });
       },
       ukazSpravne: function () {},
       reset: function () { hotovo(true); },
     };
   };
+  TYPY.kod = function (k, hotovo) { return K.UlohaKod(k, hotovo); };
+
 
   /* ---------- prehrávač ----------
      opts: { kroky:[{krok, qid}], rezim:"lekcia"|"test"|"opakovanie", farba, koniec(vysledok), zavriet() } */
@@ -271,6 +306,7 @@
         var t = v.tlacidlo; t.className = "btn plna"; t.disabled = false;
         if (dalsia && dalsia.typ === "lekcia") { t.textContent = "Ďalšia lekcia"; t.onclick = function () { K.ist("lekcia-" + dalsia.id, true); }; }
         else if (dalsia && dalsia.typ === "test") { t.textContent = "Na test modulu"; t.onclick = function () { K.ist("test-" + info.kurz + "-" + dalsia.modul.cislo, true); }; }
+        else if (dalsia && dalsia.typ === "zaver") { t.textContent = "Na záverečné projekty"; t.onclick = function () { K.ist("kurz-" + info.kurz, true); }; }
         else { t.textContent = "Späť na kurz"; t.onclick = function () { K.ist("kurz-" + info.kurz, true); }; }
         var spat = K.el('<button type="button" class="btn sek plna">Späť na kurz</button>');
         spat.onclick = function () { K.ist("kurz-" + info.kurz, true); };

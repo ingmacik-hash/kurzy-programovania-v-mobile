@@ -217,6 +217,7 @@ body.bez-menu #spodna{display:none}
 .ed-plocha{position:relative;min-height:180px;height:var(--vyska,220px)}
 .ed-plocha pre,.ed-plocha textarea{position:absolute;inset:0;margin:0;padding:12px 12px 12px 46px;font:14px/1.6 var(--f-code);white-space:pre;overflow:auto;tab-size:2;border:0;letter-spacing:0;word-spacing:0}
 .ed-plocha pre{color:var(--code-text);pointer-events:none}
+.ed-plocha code{font:inherit;padding:0;background:none}
 .ed-plocha textarea{background:transparent;color:transparent;caret-color:#fff;resize:none;outline:0;-webkit-text-fill-color:transparent}
 .ed-plocha textarea::selection{background:rgba(125,155,255,.35);-webkit-text-fill-color:transparent}
 .ed-cisla{position:absolute;left:0;top:0;bottom:0;width:36px;padding:12px 6px 12px 0;text-align:right;font:14px/1.6 var(--f-code);color:var(--code-muted);opacity:.6;pointer-events:none;overflow:hidden;white-space:pre;border-right:1px solid var(--code-line)}

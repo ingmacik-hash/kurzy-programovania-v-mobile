@@ -25,7 +25,7 @@ function vypln(w, d, k) {
   var w = fr.contentWindow, K = w.K, d = fr.contentDocument;
   K.vymaz();
   if (q.get("tema")) { K.stav.nast.tema = q.get("tema"); K.temu(); }
-  if (q.get("hotove")) K.polozkyKurzu("html").slice(0, +q.get("hotove")).forEach(function (p) { if (p.typ === "lekcia") K.stav.hotove[p.id] = true; else K.stav.testy[p.id] = { preslo: true, best: 100 }; });
+  if (q.get("hotove")) K.polozkyKurzu(q.get("kurz") || "html").slice(0, +q.get("hotove")).forEach(function (p) { if (p.typ === "lekcia") K.stav.hotove[p.id] = true; else K.stav.testy[p.id] = { preslo: true, best: 100 }; });
   if (q.get("xp")) { K.pridajXP(+q.get("xp")); }
   d.getElementById("obrazovka").innerHTML = "";
   w.location.hash = q.get("hash") || "domov";

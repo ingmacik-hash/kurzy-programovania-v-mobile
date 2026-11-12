@@ -303,3 +303,4 @@ body.bez-menu #spodna{display:none}
 .kriteria li.ok .znak{background:var(--ok);color:#fff}
 .kriteria li.nie .znak{background:var(--bad);color:#fff}
 .projekt-obr .lekcia-telo .obal{gap:14px}
+.ziva-ukazka{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:#fff;width:100%;display:block}.kod-obal .kod + .kod{border-radius:0;border-top:1px solid var(--code-line)}

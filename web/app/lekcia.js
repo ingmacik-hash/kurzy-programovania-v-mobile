@@ -124,8 +124,8 @@
      Programy (py, cpp) sa spustia a kontroluje sa ich výstup: kontrola(vystup, kod, vysledok). */
   K.UlohaKod = function (k, hotovo, nastavenia) {
     nastavenia = nastavenia || {};
-    var karty = k.karty || ["html"], program = karty[0] === "py" || karty[0] === "cpp" || karty[0] === "sql";
-    var start = {}; ["html", "css", "js", "py", "cpp", "sql"].forEach(function (x) { start[x] = (k.start && k.start[x]) || ""; });
+    var karty = k.karty || ["html"], program = K.PROGRAMY.indexOf(karty[0]) >= 0;
+    var start = {}; ["html", "css", "js"].concat(K.PROGRAMY).forEach(function (x) { start[x] = (k.start && k.start[x]) || ""; });
     var subory = nastavenia.subory || JSON.parse(JSON.stringify(start));
     var el = K.el('<div class="editor-krok"><div class="zadanie"></div><div class="chyba-box" hidden></div></div>');
     el.querySelector(".zadanie").innerHTML = (nastavenia.bezNadpisu ? "" : "<b>Úloha:</b> ") + k.zadanie + (k.napoveda ? ' <button type="button" class="btn sek" data-napoveda style="min-height:34px;padding:5px 12px;font-size:13.5px;margin-top:8px;display:flex">Nápoveda</button><div class="tip" data-tip hidden style="margin-top:8px"></div>' : "");
@@ -240,7 +240,7 @@
       if (i >= opts.kroky.length) { koniec(); return; }
       var k = opts.kroky[i].krok;
       zleTeraz = false; stav = "odpoved";
-      var qk = opts.kroky[i].qid; K.jazykKurzu = qk ? ({ python: "py" }[qk.split("-")[0]] || qk.split("-")[0]) : null;
+      var qk = opts.kroky[i].qid; K.jazykKurzu = qk ? K.jazykPre(qk.split("-")[0]) : null;
       akt = TYPY[k.typ](k, function (moze) { if (stav === "odpoved") tl.disabled = !moze; });
       telo.innerHTML = ""; telo.appendChild(akt.el);
       el.querySelector(".lekcia-telo").scrollTop = 0;

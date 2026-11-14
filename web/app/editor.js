@@ -57,7 +57,24 @@
       return span("t-sel", m[5]);
     });
   }
-  var CPP_KW = "int|double|float|char|bool|void|long|short|unsigned|const|auto|string|vector|return|if|else|for|while|do|break|continue|switch|case|default|class|struct|public|private|protected|new|delete|true|false|using|namespace|std|include|nullptr|this|static|template|typename";
+  /* Zvýrazňovanie pre C, Javu, C# a Kotlin (jazyky s podobnou syntaxou) */
+  var HL_CLIKE = {
+    c: { kw: "int|double|float|char|void|long|short|unsigned|signed|const|return|if|else|for|while|do|break|continue|switch|case|default|struct|typedef|enum|sizeof|static|NULL|bool|true|false", fn: "printf|scanf|main|strlen|strcpy|strcmp|strcat|sqrt|pow|fgets|puts|malloc|free", pre: true },
+    java: { kw: "public|private|protected|class|static|void|int|double|float|long|char|boolean|byte|short|String|final|return|if|else|for|while|do|break|continue|switch|case|default|new|this|null|true|false|import|package|extends|implements|interface|try|catch|throw|throws|var|record|enum", fn: "System|out|println|print|printf|main|Scanner|nextInt|nextLine|nextDouble|Math|ArrayList|List|length|size|add|get|equals" },
+    cs: { kw: "using|namespace|public|private|protected|class|struct|static|void|int|double|float|long|char|bool|string|decimal|var|const|readonly|return|if|else|for|foreach|in|while|do|break|continue|switch|case|default|new|this|null|true|false|get|set|override|virtual|interface|try|catch|throw|enum|record", fn: "Console|WriteLine|Write|ReadLine|Main|Parse|Math|List|Length|Count|Add|ToString|ToUpper|Split" },
+    kt: { kw: "fun|val|var|if|else|when|for|while|do|in|is|as|return|break|continue|class|data|object|interface|open|override|private|public|internal|null|true|false|this|until|downTo|step|import|package|enum|companion|lateinit", fn: "println|print|readln|readLine|main|listOf|mutableListOf|mapOf|mutableMapOf|toInt|toDouble|toString|size|forEach|map|filter|sum|maxOrNull|minOrNull|repeat" },
+  };
+  function hlClike(src, d) {
+    return tokenizuj(src, new RegExp("(\\/\\/.*|\\/\\*[\\s\\S]*?(?:\\*\\/|$))|" + (d.pre ? "(#\\s*\\w+)" : "(#\\w+(?!\\w))") + "|(\\$?\"(?:\\\\.|[^\"\\\\\\n])*\"?|'(?:\\\\.|[^'\\\\\\n])*'?|<[a-z_.]+\\.h>)|\\b(\\d+\\.?\\d*[fFLdD]?)\\b|\\b(" + d.kw + ")\\b|\\b(" + d.fn + ")\\b", "gm"), function (m) {
+      if (m[1]) return span("t-com", m[1]);
+      if (m[2]) return span("t-tag", m[2]);
+      if (m[3]) return span("t-str", m[3]);
+      if (m[4]) return span("t-num", m[4]);
+      if (m[5]) return span("t-kw", m[5]);
+      return span("t-sel", m[6]);
+    });
+  }
+  var CPP_KW ="int|double|float|char|bool|void|long|short|unsigned|const|auto|string|vector|return|if|else|for|while|do|break|continue|switch|case|default|class|struct|public|private|protected|new|delete|true|false|using|namespace|std|include|nullptr|this|static|template|typename";
   function hlCpp(src) {
     return tokenizuj(src, new RegExp("(\\/\\/.*|\\/\\*[\\s\\S]*?(?:\\*\\/|$))|(#\\s*\\w+)|(\"(?:\\\\.|[^\"\\\\\\n])*\"?|'(?:\\\\.|[^'\\\\\\n])*'?|<[a-z_]+>(?=\\s*$))|\\b(\\d+\\.?\\d*)\\b|\\b(" + CPP_KW + ")\\b|\\b(cout|cin|endl|main|printf|getline)\\b", "gm"), function (m) {
       if (m[1]) return span("t-com", m[1]);
@@ -84,6 +101,7 @@
     if (jazyk === "html") return hlHtml(src);
     if (jazyk === "py" || jazyk === "python") return hlPy(src);
     if (jazyk === "cpp") return hlCpp(src);
+    if (HL_CLIKE[jazyk]) return hlClike(src, HL_CLIKE[jazyk]);
     if (jazyk === "sql") return hlSql(src);
     return esc(src);
   };
@@ -176,7 +194,7 @@
 
   /* ---------- chyby C++ (gcc) po slovensky ---------- */
   var CPP_CHYBY = [
-    [/expected ';' before|expected ';' at end/, "Chýba bodkočiarka ; na konci príkazu (často na riadku vyššie)."],
+    [/expected ';' before|expected ';' at end|expected ',' or ';' before/, "Chýba bodkočiarka ; na konci príkazu (často na riadku vyššie)."],
     [/'(\w+)' was not declared in this scope/, "„$1“ nie je vytvorené. Vytvor premennú (napr. int $1;), alebo skontroluj preklep. Pri cout/cin/string nezabudni na using namespace std;"],
     [/'(\w+)' is not a member of 'std'/, "$1 nie je v std. Chýba #include, alebo je preklep."],
     [/expected '\}' at end of input/, "Chýba zatváracia zložená zátvorka }."],
@@ -191,6 +209,112 @@
     [/fatal error: (.+): No such file/, "Knižnica $1 neexistuje. Skontroluj #include."],
     [/control reaches end of non-void function/, "Funkcia má vrátiť hodnotu, ale chýba return."],
   ];
+  var C_CHYBY = [
+    [/'(\w+)' undeclared/, "„$1“ nie je vytvorené. Vytvor premennú (napr. int $1;) alebo skontroluj preklep."],
+    [/implicit declaration of function '(\w+)'/, "Funkciu $1 prekladač nepozná. Chýba #include (napr. <stdio.h>, <string.h>, <math.h>) alebo je v mene preklep."],
+    [/format '%(\w+)' expects argument of type '(.+?)'/, "Formát %$1 v printf/scanf čaká hodnotu typu $2. Skontroluj, či formát sedí s typom premennej (%d celé, %f desatinné, %s text, %c znak)."],
+    [/unknown type name '(\w+)'/, "Typ $1 neexistuje. V C nie je string ani bool bez #include <stdbool.h>; text je pole znakov char[]."],
+  ];
+  var JAVA_CHYBY = [
+    [/';' expected/, "Chýba bodkočiarka ; na konci príkazu."],
+    [/cannot find symbol[\s\S]*?symbol:\s+(?:variable|method|class)\s+(\w+)/, "„$1“ neexistuje. Vytvoril si túto premennú/metódu? Skontroluj preklep a veľké a malé písmená (Java ich rozlišuje: String, System)."],
+    [/cannot find symbol/, "Niečo z tohto riadku neexistuje. Skontroluj preklepy a veľké a malé písmená."],
+    [/incompatible types: (.+?) cannot be converted to (.+)/, "Nesprávny typ: $1 sa nedá uložiť do $2."],
+    [/incompatible types: possible lossy conversion from (\w+) to (\w+)/, "Prevodom z $1 na $2 by sa stratila časť hodnoty. Použi pretypovanie, napr. ($2)."],
+    [/reached end of file while parsing/, "Chýba zatváracia zložená zátvorka }."],
+    [/unclosed string literal/, "Text nie je uzavretý úvodzovkami."],
+    [/missing return statement/, "Metóda má vrátiť hodnotu, ale chýba return."],
+    [/variable (\w+) might not have been initialized/, "Premenná $1 ešte nemá hodnotu. Priraď jej hodnotu pred použitím."],
+    [/variable (\w+) is already defined/, "Premenná $1 už existuje. Druhýkrát ju nevytváraj (bez typu pred menom)."],
+    [/cannot assign a value to final variable (\w+)/, "$1 je konštanta (final), nedá sa zmeniť."],
+    [/'\)' expected|'\)' or ',' expected/, "Chýba zatváracia zátvorka )."],
+    [/class, interface, enum, or record expected/, "Kód je mimo triedy, alebo je navyše zátvorka }."],
+    [/bad operand types for binary operator '(.+?)'/, "Operátor $1 sa nedá použiť na tieto typy. Text porovnávaj cez .equals(), nie ==."],
+    [/non-static (?:method|variable) (\w+)/, "$1 nie je static. Z metódy main voláš len static metódy (alebo si vytvor objekt)."],
+    [/illegal start of expression/, "Na tomto mieste Java nečaká takýto zápis. Skontroluj zátvorky a bodkočiarky."],
+    [/not a statement/, "Toto nie je príkaz. Chýba priradenie alebo volanie?"],
+  ];
+  var CS_CHYBY = [
+    [/CS1002/, "Chýba bodkočiarka ; na konci príkazu."],
+    [/CS0103: The name '(\w+)' does not exist/, "„$1“ neexistuje. Vytvoril si túto premennú? Skontroluj preklep a veľké a malé písmená (C# ich rozlišuje: Console, WriteLine)."],
+    [/CS0029: Cannot implicitly convert type '(.+?)' to '(.+?)'/, "Hodnotu typu $1 nemožno uložiť do $2. Na prevod textu na číslo použi int.Parse(…)."],
+    [/CS0266: Cannot implicitly convert type '(.+?)' to '(.+?)'/, "Prevod z $1 na $2 treba zapísať výslovne, napr. ($2)hodnota."],
+    [/CS1513/, "Chýba zatváracia zložená zátvorka }."],
+    [/CS1026/, "Chýba zatváracia zátvorka )."],
+    [/CS1010/, "Text nie je uzavretý úvodzovkami."],
+    [/CS0161/, "Metóda má vrátiť hodnotu, ale nie vo všetkých prípadoch je return."],
+    [/CS0165: Use of unassigned local variable '(\w+)'/, "Premenná $1 ešte nemá hodnotu."],
+    [/CS0128: A local variable or function named '(\w+)' is already defined/, "Premenná $1 už existuje. Druhýkrát ju nevytváraj."],
+    [/CS0117|CS1061: '(.+?)' does not contain a definition for '(\w+)'/, "$1 nemá $2. Nepreklepol si sa?"],
+    [/CS0120/, "Táto metóda nie je static. Z Main voláš len static metódy (alebo si vytvor objekt)."],
+    [/CS0019: Operator '(.+?)' cannot be applied/, "Operátor $1 sa nedá použiť na tieto typy."],
+    [/CS0131/, "Na ľavej strane = musí byť premenná."],
+  ];
+  var KT_CHYBY = [
+    [/Unresolved reference[:']?\s*'?(\w+)/, "„$1“ neexistuje. Vytvoril si túto premennú/funkciu? Skontroluj preklep a veľké a malé písmená."],
+    [/(?:Initializer type mismatch|Type mismatch|Assignment type mismatch|Argument type mismatch|Return type mismatch): (?:inferred type is|expected|actual) '?(\w+)'?.*?'?(\w+)'?\.?$/, "Nesprávny typ hodnoty. Text na číslo prevedieš cez .toInt(), číslo na text cez .toString()."],
+    [/mismatch/, "Nesprávny typ hodnoty. Text na číslo prevedieš cez .toInt(), číslo na text cez .toString()."],
+    [/'val' cannot be reassigned|Val cannot be reassigned/, "Premennú val nemožno zmeniť. Ak sa má meniť, vytvor ju cez var."],
+    [/Expecting '\)'/, "Chýba zatváracia zátvorka )."],
+    [/Expecting '\}'|Missing '\}'/, "Chýba zatváracia zložená zátvorka }."],
+    [/Expecting '"'|Unclosed string|Expecting an expression/, "Neúplný zápis: chýba hodnota alebo úvodzovka."],
+    [/must be initialized/, "Premenná musí mať hodnotu hneď pri vytvorení."],
+    [/'return' expression required|Missing return/, "Funkcia má vrátiť hodnotu, ale chýba return."],
+    [/Conflicting declarations?|already declared/, "Toto meno už existuje. Druhýkrát ho nevytváraj."],
+    [/Only safe \(\?\.\) or non-null asserted \(!!\.\) calls are allowed/, "Hodnota môže byť null. Použi ?. alebo ?: (napr. readLine() ?: \"\")."],
+    [/None of the following candidates is applicable|No value passed for parameter '(\w+)'/, "Funkcia dostala nesprávne hodnoty (počet alebo typ argumentov)."],
+    [/Cannot infer type/, "Prekladač nevie určiť typ. Často je príčinou neexistujúca trieda alebo funkcia na tomto riadku."],
+    [/This type is final, so it cannot be (?:inherited from|extended)/, "Z tejto triedy sa nedá dediť. Označ ju ako open class."],
+    [/'(\w+)' hides member of supertype|'(\w+)' must override/, "Metódu predka treba prepísať cez override (a predok ju musí mať open)."],
+  ];
+  function prvaZhoda(tab, msg) {
+    for (var j = 0; j < tab.length; j++) { var m = tab[j][0].exec(msg); if (m) return tab[j][1].replace(/\$(\d)/g, function (_, n) { return m[+n] || ""; }); }
+    return null;
+  }
+  /* Chyba prekladu → { sprava (po slovensky), riadok } */
+  K.prelozChybuPrekladu = function (jazyk, text) {
+    text = text || "";
+    if (jazyk === "cpp") return K.prelozCppChybu(text);
+    if (jazyk === "kt") return { sprava: prvaZhoda(KT_CHYBY, text) || "Chyba v kóde: " + text, riadok: 0 };
+    var riadky = text.split("\n"), i, prvy = null, cast;
+    for (i = 0; i < riadky.length; i++) if (/error/.test(riadky[i]) && !/warning/.test(riadky[i])) { prvy = riadky[i]; break; }
+    if (!prvy) return { sprava: text.trim().split("\n")[0] || "Program sa nepodarilo preložiť.", riadok: 0 };
+    var r;
+    if (jazyk === "c") {
+      r = /(?:prog\.c|<source>|example\.c):(\d+):/.exec(prvy);
+      var msgC = prvy.replace(/^.*error:\s*/, "");
+      return { sprava: prvaZhoda(C_CHYBY, msgC) || prvaZhoda(CPP_CHYBY, msgC) || "Chyba prekladača: " + msgC, riadok: r ? +r[1] : 0 };
+    }
+    if (jazyk === "java") {
+      r = /(?:\.java|<source>):(\d+):/.exec(prvy);
+      cast = riadky.slice(i, i + 5).join("\n");
+      return { sprava: prvaZhoda(JAVA_CHYBY, cast) || "Chyba prekladača: " + prvy.replace(/^.*error:\s*/, ""), riadok: r ? +r[1] : 0 };
+    }
+    if (jazyk === "cs") {
+      r = /\((\d+),\d+\): error/.exec(prvy);
+      return { sprava: prvaZhoda(CS_CHYBY, prvy) || "Chyba prekladača: " + prvy.replace(/^.*error\s*/, ""), riadok: r ? +r[1] : 0 };
+    }
+    return { sprava: text, riadok: 0 };
+  };
+  var BEH_CHYBY = [
+    [/ArithmeticException|DivideByZeroException|divide by zero|Floating point exception/i, "Delenie nulou. Nulou sa deliť nedá."],
+    [/IndexOutOfBounds|IndexOutOfRange|ArgumentOutOfRange|out of bounds|index out of range/i, "Index je mimo poľa/zoznamu. Prvky majú indexy 0 až dĺžka − 1."],
+    [/NumberFormatException|FormatException/, "Text sa nedá premeniť na číslo. Skontroluj vstup a prevod (parse/toInt)."],
+    [/InputMismatchException/, "Vstup nie je číslo, hoci program čaká číslo."],
+    [/NoSuchElementException|Vstup sa minul|NullReferenceException.*ReadLine/, "Program chce čítať ďalší vstup, ale vstup sa minul."],
+    [/NullPointerException|NullReferenceException|null/, "Pracuješ s hodnotou null (nič). Premenná alebo objekt nemá hodnotu."],
+    [/StackOverflow/i, "Funkcia volá sama seba donekonečna (chýba základný prípad rekurzie)."],
+    [/OutOfMemory/i, "Programu došla pamäť (príliš veľké pole alebo nekonečné pridávanie)."],
+  ];
+  /* Chyba za behu (výnimka) → objekt chyby alebo null */
+  K.prelozChybuBehu = function (jazyk, stderr, riadok) {
+    if (!stderr || !/Exception|Error|exception|Vstup sa minul/.test(stderr)) return null;
+    if ((jazyk === "c" || jazyk === "cpp") && !/terminate called|exception/.test(stderr)) return null;
+    var r = riadok || 0, m = /\.java:(\d+)\)|:line (\d+)/.exec(stderr);
+    if (!r && m) r = +(m[1] || m[2]);
+    var prvy = stderr.split("\n").filter(function (x) { return /\S/.test(x); })[0] || stderr;
+    return { sprava: prvy, preklad: prvaZhoda(BEH_CHYBY, stderr) || "Program spadol počas behu: " + prvy, riadok: r };
+  };
   K.prelozCppChybu = function (text) {
     var riadky = (text || "").split("\n"), prvy = null;
     for (var i = 0; i < riadky.length; i++) if (/error:/.test(riadky[i])) { prvy = riadky[i]; break; }
@@ -270,49 +394,121 @@
   /* Najprv Compiler Explorer (godbolt.org), pri výpadku Wandbox (wandbox.org). */
   function bezFarieb(s) { return String(s || "").replace(/\x1b\[[0-9;]*[mK]/g, ""); }
   function texty(a) { return (a || []).map(function (x) { return x.text; }).join("\n"); }
-  function godbolt(kod, vstup) {
-    return fetch("https://godbolt.org/api/compiler/g132/compile", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ source: kod, lang: "c++", allowStoreCodeDebug: false, options: { userArguments: "-std=c++17 -O1", executeParameters: { args: [], stdin: vstup || "" }, compilerOptions: { executorRequest: true }, filters: { execute: true }, tools: [], libraries: [] } }) })
+  /* Jazyky prekladané na internete: Compiler Explorer (hlavný) a Wandbox (záloha). */
+  var JAVA_UTF8 = " System.setOut(new java.io.PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out), true, java.nio.charset.StandardCharsets.UTF_8));";
+  function javaBezPublic(kod) { return kod.replace(/^(\s*)public\s+(final\s+)?class\b/m, "$1$2class"); }
+  var KOMPIL = {
+    cpp: { nazov: "C++", ce: "g132", ceLang: "c++", ceArgs: "-std=c++17 -O1", wb: "gcc-13.2.0", wbOpt: { options: "c++17" } },
+    c: { nazov: "C", ce: "cg132", ceLang: "c", ceArgs: "-std=c17 -O1", wb: "gcc-13.2.0-c", wbOpt: {} },
+    /* Java: verejná trieda by musela byť v súbore Main.java a výstup treba prepnúť na UTF-8 (v tom istom riadku, aby sedeli čísla riadkov). */
+    java: { nazov: "Java", ce: "java2500", ceLang: "java", ceArgs: "", wb: "openjdk-jdk-22+36", wbOpt: { "runtime-option-raw": "-Dstdout.encoding=UTF-8" },
+      ceKod: function (k) { return javaBezPublic(k).replace(/(static\s+void\s+main\s*\([^)]*\)\s*(?:throws\s+[\w.,\s]+)?\{)/, "$1" + JAVA_UTF8); }, wbKod: javaBezPublic },
+    cs: { nazov: "C#", ce: "dotnet90csharpcoreclr", ceLang: "csharp", ceArgs: "", wb: "dotnetcore-8.0.402", wbOpt: {} },
+  };
+  function godbolt(j, kod, vstup) {
+    return fetch("https://godbolt.org/api/compiler/" + j.ce + "/compile", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ source: j.ceKod ? j.ceKod(kod) : kod, lang: j.ceLang, allowStoreCodeDebug: false, options: { userArguments: j.ceArgs, executeParameters: { args: [], stdin: vstup || "" }, compilerOptions: { executorRequest: true }, filters: { execute: true }, tools: [], libraries: [] } }) })
       .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
-      .then(function (j) {
-        var b = j.buildResult || {};
-        if (b.code && b.code !== 0) { var e = bezFarieb(texty(b.stderr)); return { chybaPrekladu: e || "Program sa nepodarilo preložiť." }; }
-        if (!j.didExecute) throw new Error("nespustené");
-        return { vystup: bezFarieb(texty(j.stdout)), stderr: bezFarieb(texty(j.stderr)), casovyLimit: !!j.timedOut, kod: j.code };
+      .then(function (o) {
+        var b = o.buildResult || {};
+        if (b.code && b.code !== 0) { var e = bezFarieb(texty(b.stderr) + "\n" + texty(b.stdout)); return { chybaPrekladu: e.trim() || "Program sa nepodarilo preložiť." }; }
+        if (!o.didExecute) throw new Error("nespustené");
+        return { vystup: bezFarieb(texty(o.stdout)), stderr: bezFarieb(texty(o.stderr)), casovyLimit: !!o.timedOut, kod: o.code };
       });
   }
-  function wandbox(kod, vstup, pokus) {
-    return fetch("https://wandbox.org/api/compile.json", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ compiler: "gcc-13.2.0", code: kod, stdin: vstup || "", options: "c++17" }) })
+  function wandbox(j, kod, vstup, pokus) {
+    var telo = { compiler: j.wb, code: j.wbKod ? j.wbKod(kod) : kod, stdin: vstup || "" };
+    Object.keys(j.wbOpt).forEach(function (x) { telo[x] = j.wbOpt[x]; });
+    return fetch("https://wandbox.org/api/compile.json", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(telo) })
       .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
-      .then(function (j) {
-        var vsetko = (j.compiler_error || "") + (j.program_error || "") + (j.compiler_message || "");
+      .then(function (o) {
+        var vsetko = (o.compiler_error || "") + (o.program_error || "") + (o.compiler_message || "");
         if (/crun:|Resource temporarily unavailable/.test(vsetko)) {
-          if ((pokus || 0) < 2) return new Promise(function (ok) { setTimeout(ok, 1200); }).then(function () { return wandbox(kod, vstup, (pokus || 0) + 1); });
+          if ((pokus || 0) < 2) return new Promise(function (ok) { setTimeout(ok, 1200); }).then(function () { return wandbox(j, kod, vstup, (pokus || 0) + 1); });
           throw new Error("preťažené");
         }
-        if (j.compiler_error && /error:/.test(j.compiler_error)) return { chybaPrekladu: j.compiler_error };
-        return { vystup: j.program_output || "", stderr: j.program_error || "", signal: j.signal, kod: +j.status || 0 };
+        if (o.compiler_error && /error/.test(o.compiler_error) && !o.program_output && o.status !== "0") return { chybaPrekladu: o.compiler_error };
+        return { vystup: o.program_output || "", stderr: o.program_error || "", signal: o.signal, kod: +o.status || 0 };
       });
   }
-  K.spustiCpp = function (kod, vstup, cb) {
-    var hotovo = false;
-    var t = setTimeout(function () { if (!hotovo) { hotovo = true; cb({ vystup: "", siet: true, chyba: { sprava: "Prekladač neodpovedá.", preklad: "Prekladač C++ neodpovedá. Skontroluj internet a skús znova.", riadok: 0 } }); } }, 40000);
+  /* cb({vystup, chyba:{sprava, preklad, riadok}, siet}) */
+  K.spustiKompil = function (jazyk, kod, vstup, cb) {
+    var j = KOMPIL[jazyk], hotovo = false;
+    var t = setTimeout(function () { if (!hotovo) { hotovo = true; cb({ vystup: "", siet: true, chyba: { sprava: "Prekladač neodpovedá.", preklad: "Prekladač " + j.nazov + " neodpovedá. Skontroluj internet a skús znova.", riadok: 0 } }); } }, 45000);
     function koniec(v) {
       if (hotovo) return; hotovo = true; clearTimeout(t);
-      if (v.chybaPrekladu) { var p = K.prelozCppChybu(v.chybaPrekladu); return cb({ vystup: "", chyba: { sprava: v.chybaPrekladu, preklad: p.sprava, riadok: p.riadok } }); }
-      var ch = null;
+      if (v.chybaPrekladu) { var p = K.prelozChybuPrekladu(jazyk, v.chybaPrekladu); return cb({ vystup: "", chyba: { sprava: v.chybaPrekladu, preklad: p.sprava, riadok: p.riadok } }); }
+      var ch = null, behu = K.prelozChybuBehu(jazyk, v.stderr || "");
       if (v.casovyLimit || /Killed|CPU/.test(v.signal || "")) ch = { sprava: "timeout", preklad: "Program bežal príliš dlho (nekonečný cyklus?) a bol zastavený.", riadok: 0 };
-      else if (v.signal || (v.kod && v.kod > 128)) ch = { sprava: String(v.signal || v.kod), preklad: "Program spadol počas behu. Často je to index mimo poľa alebo delenie nulou.", riadok: 0 };
-      cb({ vystup: v.vystup + (v.stderr ? (v.vystup ? "\n" : "") + v.stderr : ""), chyba: ch });
+      else if (behu) ch = behu;
+      else if (v.signal || (v.kod && v.kod > 128) || (jazyk !== "c" && jazyk !== "cpp" && v.kod)) ch = { sprava: String(v.signal || v.kod), preklad: "Program spadol počas behu. Často je to index mimo poľa alebo delenie nulou.", riadok: 0 };
+      cb({ vystup: v.vystup + (v.stderr && !behu ? (v.vystup ? "\n" : "") + v.stderr : ""), chyba: ch });
     }
-    godbolt(kod, vstup).then(koniec).catch(function () {
-      wandbox(kod, vstup).then(koniec).catch(function () {
+    godbolt(j, kod, vstup).then(koniec).catch(function () {
+      wandbox(j, kod, vstup).then(koniec).catch(function () {
         if (hotovo) return; hotovo = true; clearTimeout(t);
-        cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: "C++ sa prekladá na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } });
+        cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: j.nazov + " sa prekladá na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } });
       });
     });
   };
+  K.spustiCpp = function (kod, vstup, cb) { K.spustiKompil("cpp", kod, vstup, cb); };
+
+  /* ---------- Kotlin: Kotlin Playground (api.kotlinlang.org) ---------- */
+  /* Playground nevie čítať vstup, preto na koniec programu pridáme vlastné readln/readLine so vstupom ako zoznamom riadkov
+     (deklarácie v tom istom súbore majú prednosť pred kotlin.io; čísla riadkov programu sa nezmenia). */
+  /* POST s JSON. V aplikácii ide cez Flutter (kanál SyntaxSiet), lebo server Kotlinu neprijíma požiadavky
+     zo stránky načítanej zo súboru (pôvod „null“). V prehliadači obyčajný fetch. */
+  var sietCakaju = {}, sietId = 0;
+  K._sietOdpoved = function (id, uspech, text) {
+    var c = sietCakaju[id]; if (!c) return; delete sietCakaju[id];
+    if (!uspech) return c.nie(new Error(text));
+    try { c.ok(JSON.parse(text)); } catch (e) { c.nie(e); }
+  };
+  K.postJson = function (url, telo) {
+    if (window.SyntaxSiet && window.SyntaxSiet.postMessage) {
+      return new Promise(function (ok, nie) {
+        var id = ++sietId; sietCakaju[id] = { ok: ok, nie: nie };
+        window.SyntaxSiet.postMessage(JSON.stringify({ id: id, url: url, telo: JSON.stringify(telo) }));
+      });
+    }
+    return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(telo) })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); });
+  };
+  function ktText(s) { return '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$") + '"'; }
+  K.spustiKotlin = function (kod, vstup, cb) {
+    var riadky = (vstup || "").replace(/\r/g, "").split("\n"); if (riadky.length && riadky[riadky.length - 1] === "") riadky.pop();
+    var doplnok = "\n\nprivate val __vstupSC = mutableListOf<String>(" + riadky.map(ktText).join(", ") + ")\n" +
+      "fun readln(): String = if (__vstupSC.isEmpty()) throw IllegalStateException(\"Vstup sa minul\") else __vstupSC.removeAt(0)\n" +
+      "fun readLine(): String? = if (__vstupSC.isEmpty()) null else __vstupSC.removeAt(0)\n";
+    var hotovo = false;
+    var t = setTimeout(function () { if (!hotovo) { hotovo = true; cb({ vystup: "", siet: true, chyba: { sprava: "timeout", preklad: "Server Kotlinu neodpovedá. Skontroluj internet a skús znova.", riadok: 0 } }); } }, 45000);
+    K.postJson("https://api.kotlinlang.org/api/2.1.0/compiler/run", { args: "", confType: "java", files: [{ name: "File.kt", text: kod + doplnok }] })
+      .then(function (o) {
+        if (hotovo) return; hotovo = true; clearTimeout(t);
+        var chyby = ((o.errors || {})["File.kt"] || []).filter(function (e) { return e.severity === "ERROR"; });
+        /* Neexistujúce meno je príčina, ostatné chyby sú často len jej následok – ukáž ju prvú. */
+        chyby.sort(function (a, b) { return (/Unresolved reference/.test(b.message) ? 1 : 0) - (/Unresolved reference/.test(a.message) ? 1 : 0); });
+        if (chyby.length) { var e = chyby[0], r0 = e.interval && e.interval.start ? e.interval.start.line + 1 : 0; return cb({ vystup: "", chyba: { sprava: e.message, preklad: K.prelozChybuPrekladu("kt", e.message).sprava, riadok: r0 } }); }
+        var text = o.text || "", out = "", err = "";
+        text.replace(/<outStream>([\s\S]*?)<\/outStream>|<errStream>([\s\S]*?)<\/errStream>/g, function (_, a, b) { if (a !== undefined) out += a; if (b !== undefined) err += b; return ""; });
+        var dek = function (s) { return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&"); };
+        out = dek(out); err = dek(err);
+        if (/taking too long/.test(err)) return cb({ vystup: out, chyba: { sprava: "timeout", preklad: "Program bežal príliš dlho (nekonečný cyklus?) a bol zastavený.", riadok: 0 } });
+        if (o.exception) {
+          var ex = o.exception, riadok = 0;
+          (ex.stackTrace || []).some(function (s) { if (s.fileName === "File.kt" && s.lineNumber > 0) { riadok = s.lineNumber; return true; } });
+          var pocet = kod.split("\n").length; if (riadok > pocet) riadok = 0;
+          return cb({ vystup: out, chyba: K.prelozChybuBehu("kt", (ex.fullName || "") + ": " + (ex.message || ""), riadok) });
+        }
+        cb({ vystup: out + (err ? (out ? "\n" : "") + err : ""), chyba: null });
+      })
+      .catch(function () {
+        if (hotovo) return; hotovo = true; clearTimeout(t);
+        cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: "Kotlin sa spúšťa na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } });
+      });
+  };
+  K.PREKLADANE = ["cpp", "c", "java", "cs", "kt"];
+  K.PROGRAMY = ["py", "sql"].concat(K.PREKLADANE);
 
   /* ---------- SQL (sql.js bez WebAssembly – beží offline v telefóne) ---------- */
   var sqlS = { stav: 0, cakaju: [], SQL: null, db: null };
@@ -439,8 +635,12 @@
     py: ["Tab", "(", ")", ":", "=", "\"", "'", "[", "]", "{", "}", "+", "-", "*", "/", "<", ">", "#", ","],
     cpp: ["Tab", ";", "{", "}", "(", ")", "<", ">", "=", "\"", "[", "]", "+", "-", "*", "/", "&", "|", "!", "#", ":", ","],
     sql: ["Tab", "*", ",", ";", "(", ")", "'", "=", "<", ">", "%", ".", "_"],
+    c: ["Tab", ";", "{", "}", "(", ")", "\"", "%", "[", "]", "=", "<", ">", "&", "*", "+", "-", "/", "|", "!", "#", ","],
+    java: ["Tab", ";", "{", "}", "(", ")", "\"", ".", "[", "]", "=", "<", ">", "+", "-", "*", "/", "&", "|", "!", ","],
+    cs: ["Tab", ";", "{", "}", "(", ")", "\"", ".", "$", "[", "]", "=", "<", ">", "+", "-", "*", "/", "&", "|", "!", ","],
+    kt: ["Tab", "(", ")", "{", "}", "\"", ".", "$", "[", "]", "=", "<", ">", "+", "-", "*", "/", ":", "?", "!", ","],
   };
-  var NAZVY = { html: "HTML", css: "CSS", js: "JS", py: "Python", cpp: "C++", sql: "SQL" };
+  var NAZVY = { html: "HTML", css: "CSS", js: "JS", py: "Python", cpp: "C++", sql: "SQL", c: "C", java: "Java", cs: "C#", kt: "Kotlin" };
   var PARY = { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" };
 
   /* opts: { subory:{html,css,js}, karty:["html",...], aktivna, vyska, onZmena(subory) } */
@@ -452,7 +652,7 @@
     var ta = el.querySelector("textarea"), pre = el.querySelector("pre"), code = el.querySelector("code"),
         cisla = el.querySelector(".ed-cisla"), pas = el.querySelector(".ed-chyba-riadok"), znaky = el.querySelector(".znaky"), vnutri = false, chybaRiadok = 0;
 
-    function TAB() { return akt === "py" || akt === "cpp" ? "    " : "  "; }
+    function TAB() { return akt === "py" || K.PREKLADANE.indexOf(akt) >= 0 ? "    " : "  "; }
     el.querySelector(".ed-karty").innerHTML = karty.map(function (k) { return '<button type="button" data-k="' + k + '">' + NAZVY[k] + "</button>"; }).join("");
     function prekresli() {
       code.innerHTML = K.zvyrazni(ta.value, akt) + "\n";
@@ -568,7 +768,7 @@
     function vstup() { return ta ? ta.value : ""; }
     function spusti(kod, cb) {
       tl.disabled = true; pre.className = "vystup tlmene";
-      pre.textContent = opts.jazyk === "cpp" ? "Prekladám a spúšťam na internete…" : (K._pyPripraveny ? "Spúšťam…" : "Pripravujem Python (prvýkrát to chvíľu trvá)…");
+      pre.textContent = K.PREKLADANE.indexOf(opts.jazyk) >= 0 ? "Prekladám a spúšťam na internete…" : (K._pyPripraveny ? "Spúšťam…" : "Pripravujem Python (prvýkrát to chvíľu trvá)…");
       var hotovo = function (r) {
         K._pyPripraveny = true; tl.disabled = false;
         pre.className = "vystup" + (r.chyba ? " s-chybou" : "");
@@ -583,7 +783,8 @@
         if (cb) cb(r);
       };
       if (opts.jazyk === "sql") { pre.textContent = "Spúšťam dotaz…"; K.spustiSql(kod, opts.databaza, hotovo); }
-      else if (opts.jazyk === "cpp") K.spustiCpp(kod, vstup(), hotovo);
+      else if (opts.jazyk === "kt") K.spustiKotlin(kod, vstup(), hotovo);
+      else if (K.PREKLADANE.indexOf(opts.jazyk) >= 0) K.spustiKompil(opts.jazyk, kod, vstup(), hotovo);
       else K.spustiPython(kod, vstup().split("\n").filter(function (x, i, a) { return x !== "" || i < a.length - 1; }), hotovo);
     }
     tl.onclick = function () { if (opts.spusti) spusti(opts.spusti()); };

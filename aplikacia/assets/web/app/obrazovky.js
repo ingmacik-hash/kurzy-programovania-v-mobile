@@ -96,7 +96,7 @@
       var f = hesla.filter(function (x) { return !q || (x.znak + " " + x.nazov + " " + x.popis).toLowerCase().indexOf(q) >= 0; });
       f.forEach(function (x) {
         if (x.kat !== kat && !q) { kat = x.kat; h += '<div class="stitok kat">' + esc(kat) + "</div>"; }
-        h += '<div class="heslo"><div class="z">' + esc(x.znak) + "</div><div style=\"min-width:0\"><b>" + esc(x.nazov) + "</b><p>" + x.popis + "</p>" + (x.priklad ? K.blokKodu(x.priklad, x.jazyk || akt) : "") + "</div></div>";
+        h += '<div class="heslo"><div class="z">' + esc(x.znak) + "</div><div style=\"min-width:0\"><b>" + esc(x.nazov) + "</b><p>" + x.popis + "</p>" + (x.priklad ? K.blokKodu(x.priklad, x.jazyk || K.jazykPre(akt)) : "") + "</div></div>";
       });
       zoznam.innerHTML = h || '<p class="tlmene">Nič som nenašiel. Skús iné slovo.</p>';
     }
@@ -182,7 +182,7 @@
     var h = '<div class="obal"><div class="riadok"><button type="button" class="ikona-btn" data-spat aria-label="Späť">' + K.ikona.spat + '</button><div><span class="stitok">SyntaxCode</span><h1 style="font-size:26px">Licencie a autori</h1></div></div>' +
       '<div class="karta" style="display:flex;flex-direction:column;gap:8px"><p style="margin:0">Lekcie, úlohy, obrázky a kód aplikácie SyntaxCode sú pôvodné dielo autora aplikácie.</p>' +
       '<p class="tlmene" style="margin:0;font-size:14px">Aplikácia používa tieto voľne šíriteľné súčasti. Ďakujeme ich autorom.</p>' +
-      '<p class="tlmene" style="margin:0;font-size:14px">Programy v C++ sa prekladajú na internete cez bezplatné služby <b>Compiler Explorer</b> (godbolt.org) a <b>Wandbox</b> (wandbox.org). Posiela sa im len kód úlohy a vstup, žiadne osobné údaje.</p></div>' +
+      '<p class="tlmene" style="margin:0;font-size:14px">Programy v C, C++, Jave a C# sa prekladajú na internete cez bezplatné služby <b>Compiler Explorer</b> (godbolt.org) a <b>Wandbox</b> (wandbox.org), programy v Kotline cez <b>Kotlin Playground</b> od JetBrains (api.kotlinlang.org). Posiela sa im len kód úlohy a vstup, žiadne osobné údaje.</p></div>' +
       (K.LICENCIE || []).map(function (l, i) {
         return '<details class="karta licencia"><summary><b>' + esc(l.nazov) + '</b><small class="tlmene">' + esc(l.popis) + " · " + esc(l.licencia) + '</small></summary><p class="tlmene" style="font-size:13px;margin:8px 0">' + esc(l.url) + '</p><pre>' + esc(l.text) + "</pre></details>";
       }).join("") + "</div>";

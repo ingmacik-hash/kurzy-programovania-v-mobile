@@ -41,7 +41,7 @@
         if (!ok) { dole.className = "lekcia-dole zle"; sv.hidden = false; sv.innerHTML = "<div><b>Projekt sa nedá vyhodnotiť</b><p>" + esc(sprava) + "</p></div>"; oznac(null); vysl.innerHTML = ""; return; }
         var spolu = 0, ziskane = 0, vysledky = p.kriteria.map(function (c) {
           var b = c.body || 1, v = false; spolu += b;
-          try { v = !!c.test(karty[0] === "py" || karty[0] === "cpp" ? (detail.vystup || "") : detail, s, detail); } catch (e) { v = false; }
+          try { v = !!c.test(K.PROGRAMY.indexOf(karty[0]) >= 0 && karty[0] !== "sql" ? (detail.vystup || "") : detail, s, detail); } catch (e) { v = false; }
           if (v) ziskane += b; return v;
         });
         var pct = Math.round(ziskane / spolu * 100), preslo = pct >= potrebne;

@@ -35,6 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   webview_flutter: ^4.14.1
+  flutter_native_splash: ^2.4.8
 
 dev_dependencies:
   flutter_test:
@@ -110,3 +111,16 @@ flutter_launcher_icons:
   adaptive_icon_background: "#2f5bea"
   adaptive_icon_foreground: "assets_ikona/popredie.png"
   min_sdk_android: 21
+
+# Úvodná obrazovka (logo {S} na modrom pozadí, kým sa načíta aplikácia).
+# Po zmene spusti: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#2f5bea"
+  image: assets_ikona/popredie.png
+  android_12:
+    color: "#2f5bea"
+    image: assets_ikona/popredie.png
+    icon_background_color: "#2f5bea"
+  ios: true
+  android: true
+  fullscreen: false

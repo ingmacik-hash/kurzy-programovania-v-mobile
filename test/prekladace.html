@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="utf-8"><title>Test online prekladačov</title>
+<!-- Overí spustenie, vstup, diakritiku, chyby prekladu a chyby za behu pre C, Javu, C# a Kotlin. Potrebuje internet. --></head>
+<body><pre id="vysledky">BEŽÍ</pre>
+<iframe id="app" src="../web/index.html" style="width:400px;height:300px"></iframe>
+<script>
+var spustene = false;
+document.getElementById("app").onload = async function () {
+  if (spustene) return; spustene = true;
+  var K = this.contentWindow.K, out = [], chyby = 0;
+  function ok(p, s) { if (!p) chyby++; out.push((p ? "OK: " : "CHYBA: ") + s); }
+  function spusti(j, kod, vstup) { return new Promise(function (r) { var t0 = Date.now(); (j === "kt" ? K.spustiKotlin : K.spustiKompil.bind(null, j)).call(null, kod, vstup, function (x) { x.ms = Date.now() - t0; r(x); }); }); }
+  var T = {
+    c: { dobry: '#include <stdio.h>\n\nint main(void) {\n    int a, b;\n    scanf("%d %d", &a, &b);\n    printf("Súčet: %d\\n", a + b);\n    return 0;\n}', zly: '#include <stdio.h>\n\nint main(void) {\n    int a = 5\n    printf("%d", a);\n    return 0;\n}', zlyRiadok: 5, behu: null },
+    java: { dobry: 'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int a = sc.nextInt(), b = sc.nextInt();\n        System.out.println("Súčet: " + (a + b));\n    }\n}', zly: 'public class Main {\n    public static void main(String[] args) {\n        int x = 5\n        System.out.println(x);\n    }\n}', zlyRiadok: 3,
+      behu: 'public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 0;\n        System.out.println(a / b);\n    }\n}', behuRiadok: 4 },
+    cs: { dobry: 'using System;\n\nclass Program {\n    static void Main() {\n        string[] c = Console.ReadLine().Split(\' \');\n        Console.WriteLine($"Súčet: {int.Parse(c[0]) + int.Parse(c[1])}");\n    }\n}', zly: 'using System;\n\nclass Program {\n    static void Main() {\n        int x = 5\n        Console.WriteLine(x);\n    }\n}', zlyRiadok: 5,
+      behu: 'using System;\n\nclass Program {\n    static void Main() {\n        int[] p = new int[3];\n        Console.WriteLine(p[5]);\n    }\n}', behuRiadok: 0 },
+    kt: { dobry: 'fun main() {\n    val (a, b) = readln().split(" ").map { it.toInt() }\n    println("Súčet: ${a + b}")\n}', zly: 'fun main() {\n    val x: Int = "text"\n    println(x)\n}', zlyRiadok: 2,
+      behu: 'fun main() {\n    val z = listOf(1, 2)\n    println(z[5])\n}', behuRiadok: 3 },
+  };
+  for (var j in T) {
+    var r = await spusti(j, T[j].dobry, "3 4");
+    ok(!r.chyba && P(r.vystup) === "Súčet: 7", j + " beh so vstupom a diakritikou (" + r.ms + " ms): " + JSON.stringify(r.vystup) + (r.chyba ? " / " + r.chyba.preklad : ""));
+    r = await spusti(j, T[j].zly, "");
+    ok(r.chyba && r.chyba.riadok === T[j].zlyRiadok, j + " chyba prekladu → riadok " + (r.chyba && r.chyba.riadok) + ": " + (r.chyba && r.chyba.preklad));
+    if (T[j].behu) { r = await spusti(j, T[j].behu, ""); ok(r.chyba && /nulou|Index/.test(r.chyba.preklad), j + " chyba za behu → riadok " + (r.chyba && r.chyba.riadok) + ": " + (r.chyba && r.chyba.preklad)); }
+  }
+  var rk = await spusti("kt", 'fun main() {\n    val meno = readln()\n    val vek = readln().toInt()\n    println("$meno má $vek \\"rokov\\"")\n}', "Žofia \"Ž\" $x\n12\n");
+  ok(!rk.chyba && P(rk.vystup) === 'Žofia "Ž" $x má 12 "rokov"', "kt viac riadkov vstupu so špeciálnymi znakmi: " + JSON.stringify(rk.vystup));
+  ["c", "java", "cs", "kt"].forEach(function (j) { var h = K.zvyrazni(T[j].dobry, j); ok(/t-kw/.test(h), j + " zvýrazňovanie syntaxe"); });
+  function P(v) { return (v || "").replace(/\s+$/, ""); }
+  out.unshift(chyby ? "ZLYHALO: " + chyby : "VŠETKO OK");
+  document.getElementById("vysledky").textContent = out.join("\n");
+};
+</script></body></html>

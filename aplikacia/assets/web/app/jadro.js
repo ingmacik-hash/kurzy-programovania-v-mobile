@@ -68,6 +68,8 @@ K.registrujModul = function (kurzId, modul) {
 K.zavery = {};
 K.registrujZaver = function (kurzId, projekty) { K.zavery[kurzId] = (K.zavery[kurzId] || []).concat(projekty); };
 K.projekt = function (id) { var k = id.split("-")[0]; return (K.zavery[k] || []).filter(function (p) { return p.id === id; })[0] || null; };
+/* Jazyk editora/zvýrazňovania pre kurz (id kurzu → kľúč jazyka) */
+K.jazykPre = function (kurzId) { return { python: "py", csharp: "cs", kotlin: "kt" }[kurzId] || kurzId; };
 K.registrujSlovnik = function (kurzId, hesla) { K.slovnik[kurzId] = (K.slovnik[kurzId] || []).concat(hesla); };
 K.kurz = function (id) { for (var i = 0; i < K.katalog.length; i++) if (K.katalog[i].id === id) return K.katalog[i]; return null; };
 K.lekcia = function (id) {

@@ -1,13 +1,20 @@
-import 'dart:io' show Platform;
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 // Aplikácia zobrazuje SyntaxCode z assets/web/index.html (kópia priečinka ../web).
 // Po úprave webu spusti: tool/skopiruj_web.sh
 // Beží na Androide aj iOS (WebView v oboch systémoch).
-void main() => runApp(const SyntaxApp());
+void main() {
+  // Úvodná obrazovka s logom ostane, kým sa nenačíta webová časť (pozri _skryUvod).
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
+  runApp(const SyntaxApp());
+}
 
 class SyntaxApp extends StatelessWidget {
   const SyntaxApp({super.key});
@@ -32,13 +39,59 @@ class SyntaxObrazovka extends StatefulWidget {
 class _SyntaxObrazovkaState extends State<SyntaxObrazovka> {
   late final WebViewController _web;
 
+  // Servery, na ktoré smie webová časť poslať požiadavku cez kanál SyntaxSiet.
+  // (Server Kotlinu neprijíma požiadavky zo stránky načítanej zo súboru, preto ich posiela aplikácia.)
+  static const _povolene = {'api.kotlinlang.org'};
+
   @override
   void initState() {
     super.initState();
+    final tmava = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
     _web = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(tmava ? const Color(0xFF0C0F17) : const Color(0xFFF3F4F8))
+      ..setNavigationDelegate(NavigationDelegate(onPageFinished: (_) => _skryUvod()))
+      ..addJavaScriptChannel('SyntaxSiet', onMessageReceived: (m) => _siet(m.message))
       ..loadFlutterAsset('assets/web/index.html');
+    // Poistka: úvodná obrazovka zmizne najneskôr po 8 sekundách.
+    Future.delayed(const Duration(seconds: 8), _skryUvod);
   }
+
+  var _uvodSkryty = false;
+  // Stránka je načítaná: ešte chvíľu počkáme, kým sa vykreslí, a skryjeme logo.
+  void _skryUvod() {
+    if (_uvodSkryty) return;
+    _uvodSkryty = true;
+    Future.delayed(const Duration(milliseconds: 150), FlutterNativeSplash.remove);
+  }
+
+  // Požiadavka z webu: {id, url, telo}. Odpoveď ide späť cez K._sietOdpoved(id, úspech, text).
+  Future<void> _siet(String sprava) async {
+    var id = 0;
+    try {
+      final m = jsonDecode(sprava) as Map<String, dynamic>;
+      id = (m['id'] as num).toInt();
+      final uri = Uri.parse(m['url'] as String);
+      if (uri.scheme != 'https' || !_povolene.contains(uri.host)) throw 'Nepovolená adresa';
+      final klient = HttpClient()..connectionTimeout = const Duration(seconds: 20);
+      try {
+        final poz = await klient.postUrl(uri);
+        poz.headers.contentType = ContentType.json;
+        poz.add(utf8.encode(m['telo'] as String));
+        final odp = await poz.close().timeout(const Duration(seconds: 40));
+        final text = await odp.transform(utf8.decoder).join();
+        if (odp.statusCode != 200) throw 'http ${odp.statusCode}';
+        await _odpovedz(id, true, text);
+      } finally {
+        klient.close();
+      }
+    } catch (e) {
+      await _odpovedz(id, false, e.toString());
+    }
+  }
+
+  Future<void> _odpovedz(int id, bool uspech, String text) =>
+      _web.runJavaScript('K._sietOdpoved($id, $uspech, ${jsonEncode(text)})');
 
   // Späť: najprv sa pýtame webu (krok späť v lekcii, návrat na kurz…).
   // Na domovskej obrazovke sa aplikácia na Androide zavrie. Na iOS nie –

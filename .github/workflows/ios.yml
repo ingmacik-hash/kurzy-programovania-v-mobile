@@ -1,0 +1,44 @@
+# Zostaví iOS verziu SyntaxCode na Macu od GitHubu (bez podpisu).
+# Overí, že sa aplikácia pre iPhone dá preložiť. Na inštaláciu do iPhonu
+# a do App Store treba Apple Developer účet a podpísanie (pozri aplikacia/IOS.md).
+name: iOS zostava
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "aplikacia/**"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Skopíruj web do aplikácie
+        run: sh aplikacia/tool/skopiruj_web.sh
+
+      - name: Závislosti
+        working-directory: aplikacia
+        run: flutter pub get
+
+      - name: Zostav iOS (bez podpisu)
+        working-directory: aplikacia
+        run: flutter build ios --release --no-codesign
+
+      - name: Ulož Runner.app
+        uses: actions/upload-artifact@v4
+        with:
+          name: SyntaxCode-ios-nepodpisane
+          path: aplikacia/build/ios/iphoneos/Runner.app
+          retention-days: 7

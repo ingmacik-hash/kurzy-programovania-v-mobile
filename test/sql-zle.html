@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head><meta charset="utf-8"><title>SQL: kontroly odmietnu zlé riešenia</title>
+<!-- Každej SQL úlohe pošle správne riešenie (musí prejsť) a niekoľko zlých dotazov (musia byť odmietnuté). --></head>
+<body>
+<pre id="vysledky">BEŽÍ</pre>
+<iframe id="app" src="../web/index.html" style="width:412px;height:600px"></iframe>
+<script>
+var out = [], chyby = 0, spustene = false;
+var ZLE = ["SELECT * FROM zakaznici;", "SELECT * FROM produkty;", "SELECT 1;", "SELECT nazov FROM produkty WHERE id < 0;", "UPDATE produkty SET cena = 0;", "DELETE FROM polozky;"];
+document.getElementById("app").onload = async function () {
+  if (spustene) return; spustene = true;
+  var w = this.contentWindow, K = w.K;
+  function spusti(kod, db) { return new Promise(function (ok) { K.spustiSql(kod, db, ok); }); }
+  var kroky = [];
+  (K.moduly.sql || []).forEach(function (m) { m.lekcie.forEach(function (l) { l.kroky.forEach(function (k, i) { if (k.typ === "kod") kroky.push({ id: l.id + "#" + i, k: k }); }); }); });
+  for (var n = 0; n < kroky.length; n++) {
+    var x = kroky[n], db = x.k.databaza !== undefined ? x.k.databaza : K.sqlDatabaza;
+    var r = await spusti(x.k.riesenie.sql, db), m = r.chyba ? "chyba: " + r.chyba.preklad : x.k.kontrola(r.vystup, x.k.riesenie.sql, r);
+    if (m) { chyby++; out.push("CHYBA " + x.id + ": riešenie neprešlo: " + m); }
+    var prijate = [];
+    for (var z = 0; z < ZLE.length; z++) {
+      var rz = await spusti(ZLE[z], db);
+      if (rz.chyba) continue;
+      var mz; try { mz = x.k.kontrola(rz.vystup, ZLE[z], rz); } catch (e) { mz = "výnimka " + e.message; }
+      if (!mz) prijate.push(ZLE[z]);
+    }
+    // jediná povolená výnimka: úloha, ktorej riešením je naozaj SELECT * FROM zakaznici
+    var ocak = /^SELECT \* FROM zakaznici;$/.test(x.k.riesenie.sql.trim()) ? ["SELECT * FROM zakaznici;"] : [];
+    if (prijate.join() !== ocak.join()) { chyby++; out.push("CHYBA " + x.id + ": prijalo zlé riešenie: " + prijate.join("  ")); }
+    else out.push("OK " + x.id + " (zlých odmietnutých: " + (ZLE.length - prijate.length) + ")");
+  }
+  // ukážka hlášok pre bežné chyby
+  var ukazky = ["SELEC * FROM produkty;", "SELECT meno FROM zakaznik;", "SELECT mena FROM zakaznici;", "SELECT * FROM zakaznici WHERE mesto = 'Nitra;", "SELECT id FROM objednavky JOIN zakaznici ON zakaznik_id = zakaznici.id;", "SELECT mesto FROM zakaznici WHERE COUNT(*) > 1;", "DELETE FROM objednavky WHERE id = 5;"];
+  for (var u = 0; u < ukazky.length; u++) { var ru = await spusti(ukazky[u], K.sqlDatabaza); out.push("hláška: " + ukazky[u] + "  →  " + (ru.chyba ? ru.chyba.preklad + (ru.chyba.riadok ? " (riadok " + ru.chyba.riadok + ")" : "") : "BEZ CHYBY")); }
+  out.unshift(chyby ? "ZLYHALO: " + chyby : "VŠETKO OK (" + kroky.length + " úloh)");
+  document.getElementById("vysledky").textContent = out.join("\n");
+};
+</script>
+</body>
+</html>

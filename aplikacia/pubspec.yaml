@@ -68,6 +68,7 @@ flutter:
     - assets/web/kurzy/js/
     - assets/web/kurzy/python/
     - assets/web/kurzy/cpp/
+    - assets/web/kurzy/sql/
     - assets/web/lib/
 
   # To add assets to your application, add an assets section, like this:
@@ -103,7 +104,8 @@ flutter:
 
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
+  remove_alpha_ios: true
   image_path: "assets_ikona/ikona.png"
   adaptive_icon_background: "#2f5bea"
   adaptive_icon_foreground: "assets_ikona/popredie.png"

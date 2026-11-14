@@ -160,7 +160,12 @@ K.toast = function (text) {
 
 /* ---------- navigácia (hash) ---------- */
 /* #domov, #kurz-html, #lekcia-html-1-2, #test-html-1, #opakovanie, #slovnik, #slovnik-html, #projekty, #projekt-<id>, #profil */
-K.ist = function (hash, nahradit) { if (nahradit) location.replace("#" + hash); else location.hash = hash; };
+K.ist = function (hash, nahradit) {
+  if (!nahradit) { location.hash = hash; return; }
+  /* replaceState nenačíta stránku znova (location.replace to pri file:// niekedy urobí) */
+  try { history.replaceState(null, "", "#" + hash); } catch (e) { location.replace("#" + hash); return; }
+  K._bolaNavigacia = true; K.vykresli();
+};
 K.spat = function (nahradnyHash) { if (history.length > 1 && K._bolaNavigacia) history.back(); else K.ist(nahradnyHash || "domov", true); };
 K._bolaNavigacia = false;
 K.vykresli = function () {
@@ -185,5 +190,10 @@ K.androidSpat = function () {
   var h = (location.hash || "#domov").slice(1);
   if (h === "domov" || h === "") return false;
   if (K._spatHandler) { K._spatHandler(); return true; }
-  K.spat("domov"); return true;
+  /* O úroveň vyššie: slovník konkrétneho kurzu → slovník, lekcia/test/projekt kurzu → kurz, inak domov. */
+  var m = h.match(/^([a-z]+)(?:-([a-z]+))?/) || [];
+  if (m[1] === "slovnik" && h !== "slovnik") K.ist("slovnik", true);
+  else if (["lekcia", "test", "zaver"].indexOf(m[1]) >= 0 && m[2] && K.kurz(m[2])) K.ist("kurz-" + m[2], true);
+  else K.ist("domov", true);
+  return true;
 };

@@ -21,7 +21,7 @@
       '<div class="lekcia-dole"><div class="spatna-vazba" hidden></div><button type="button" class="btn plna" data-vyhodnot>Vyhodnotiť projekt</button></div></div>');
     el.style.setProperty("--farba", kurz.farba);
 
-    var uloha = K.UlohaKod({ zadanie: p.zadanie, karty: karty, aktivna: p.aktivna, start: p.start, vyska: p.vyska || "300px", vyskaNahladu: p.vyskaNahladu || "260px", vstup: p.vstup, napoveda: p.napoveda, riesenie: null, kontrola: function () { return null; } },
+    var uloha = K.UlohaKod({ zadanie: p.zadanie, karty: karty, aktivna: p.aktivna, start: p.start, vyska: p.vyska || "300px", vyskaNahladu: p.vyskaNahladu || "260px", vstup: p.vstup, databaza: p.databaza, napoveda: p.napoveda, riesenie: null, kontrola: function () { return null; } },
       function () {}, { subory: ulozene ? JSON.parse(JSON.stringify(ulozene)) : null, bezNadpisu: false, onZmena: function (s) { K.stav.zaverKod[id] = s; ulozZaChvilu(); } });
     var tm; function ulozZaChvilu() { clearTimeout(tm); tm = setTimeout(K.uloz, 600); }
     el.querySelector("[data-uloha]").appendChild(uloha.el);

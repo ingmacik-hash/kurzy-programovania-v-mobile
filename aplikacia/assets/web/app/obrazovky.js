@@ -164,7 +164,7 @@
       '<div class="nastavenie"><label for="n-uroven">Vysvetlenia</label><select id="n-uroven"><option value="0">Stručne</option><option value="1">Podrobne</option><option value="2">Do hĺbky</option></select></div>' +
       '<div class="nastavenie"><label>Vymazať celý pokrok</label><button type="button" class="btn sek" data-vymaz style="min-height:38px;padding:6px 12px">Vymazať</button></div></div>' +
       '<div class="potvrd" hidden><b>Naozaj vymazať všetok pokrok?</b><span>Zmažú sa XP, lekcie, testy, séria aj projekty. Toto sa nedá vrátiť.</span><div class="riadok"><button type="button" class="btn sek" data-nie style="flex:1">Nechať</button><button type="button" class="btn zle" data-ano style="flex:1">Vymazať</button></div></div>' +
-      '<p class="tlmene" style="font-size:12.5px;text-align:center;margin:0">SyntaxCode · pokrok sa ukladá len v tomto telefóne</p></div>';
+      '<p class="tlmene" style="font-size:12.5px;text-align:center;margin:0">SyntaxCode · pokrok sa ukladá len v tomto telefóne · <a href="#licencie">Licencie a autori</a></p></div>';
     var el = K.el(h);
     var t = el.querySelector("#n-tema"), c = el.querySelector("#n-ciel"), u = el.querySelector("#n-uroven");
     t.value = s.nast.tema; c.value = String(s.nast.ciel); u.value = String(s.nast.uroven);
@@ -175,6 +175,21 @@
     el.querySelector("[data-vymaz]").onclick = function () { potvrd.hidden = false; potvrd.scrollIntoView({ behavior: "smooth", block: "center" }); };
     el.querySelector("[data-nie]").onclick = function () { potvrd.hidden = true; };
     el.querySelector("[data-ano]").onclick = function () { K.vymaz(); K.vykresli(); K.toast("Pokrok vymazaný"); };
+    return el;
+  };
+  /* ---------- licencie a autori ---------- */
+  K.obrazovky.licencie = function () {
+    var h = '<div class="obal"><div class="riadok"><button type="button" class="ikona-btn" data-spat aria-label="Späť">' + K.ikona.spat + '</button><div><span class="stitok">SyntaxCode</span><h1 style="font-size:26px">Licencie a autori</h1></div></div>' +
+      '<div class="karta" style="display:flex;flex-direction:column;gap:8px"><p style="margin:0">Lekcie, úlohy, obrázky a kód aplikácie SyntaxCode sú pôvodné dielo autora aplikácie.</p>' +
+      '<p class="tlmene" style="margin:0;font-size:14px">Aplikácia používa tieto voľne šíriteľné súčasti. Ďakujeme ich autorom.</p>' +
+      '<p class="tlmene" style="margin:0;font-size:14px">Programy v C++ sa prekladajú na internete cez bezplatné služby <b>Compiler Explorer</b> (godbolt.org) a <b>Wandbox</b> (wandbox.org). Posiela sa im len kód úlohy a vstup, žiadne osobné údaje.</p></div>' +
+      (K.LICENCIE || []).map(function (l, i) {
+        return '<details class="karta licencia"><summary><b>' + esc(l.nazov) + '</b><small class="tlmene">' + esc(l.popis) + " · " + esc(l.licencia) + '</small></summary><p class="tlmene" style="font-size:13px;margin:8px 0">' + esc(l.url) + '</p><pre>' + esc(l.text) + "</pre></details>";
+      }).join("") + "</div>";
+    var el = K.el(h);
+    el.querySelector("[data-spat]").onclick = function () { K.ist("profil", true); };
+    K._spatHandler = function () { K.ist("profil", true); };
+    K._upratat = function () { K._spatHandler = null; };
     return el;
   };
   function graf() {

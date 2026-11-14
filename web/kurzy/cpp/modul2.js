@@ -87,7 +87,7 @@
       kontrola: function (v) { return r(v)[0] === "28.27" ? null : "Výstup má byť 28.27 (teraz: " + (r(v)[0] || "nič") + ")."; },
       vysvetlenie: "Presný výpis s dvoma desatinnými miestami." },
     { typ: "vyklad", nadpis: "Modul 2 máš za sebou",
-      text: "<ul><li>Premenné s typom: int, long long, double, char, bool, string.</li><li>Celočíselné delenie, <code>%</code> a pretypovanie.</li><li><code>const</code>, <code>auto</code>, <code>+=</code>, <code>++</code>.</li><li>string: length, substr, getline.</li><li>cmath a výpis cez iomanip.</li></ul>", tip: "Teraz test. Ďalšie moduly C++ (podmienky, cykly, funkcie, polia, triedy) pripravujeme." },
+      text: "<ul><li>Premenné s typom: int, long long, double, char, bool, string.</li><li>Celočíselné delenie, <code>%</code> a pretypovanie.</li><li><code>const</code>, <code>auto</code>, <code>+=</code>, <code>++</code>.</li><li>string: length, substr, getline.</li><li>cmath a výpis cez iomanip.</li></ul>", tip: "Teraz test. V ďalšom module prídu podmienky a cykly." },
   ] };
 
   var TEST = [

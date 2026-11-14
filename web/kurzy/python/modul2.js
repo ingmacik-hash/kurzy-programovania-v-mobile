@@ -89,7 +89,7 @@
       kontrola: function (v) { var l = r(v).slice(-3); return l[0] === "15" && l[1] === "PYTHON JE SUPER" && l[2] === "repus ej nohtyP" ? null : "Očakávaný výstup: 15, PYTHON JE SUPER, repus ej nohtyP."; },
       vysvetlenie: "Tri metódy, tri riadky." },
     { typ: "vyklad", nadpis: "Modul 2 máš za sebou",
-      text: "<ul><li>Premenné a snake_case.</li><li>Typy int, float, str, bool, None a <code>type()</code>.</li><li>Prevody <code>int()</code>, <code>float()</code>, <code>str()</code>, <code>round()</code>.</li><li>f-reťazce a formátovanie <code>:.2f</code>.</li><li>Metódy textu, indexy a výrezy.</li></ul>", tip: "Teraz test. Ďalšie moduly Pythonu (podmienky, cykly, funkcie, zoznamy) pripravujeme." },
+      text: "<ul><li>Premenné a snake_case.</li><li>Typy int, float, str, bool, None a <code>type()</code>.</li><li>Prevody <code>int()</code>, <code>float()</code>, <code>str()</code>, <code>round()</code>.</li><li>f-reťazce a formátovanie <code>:.2f</code>.</li><li>Metódy textu, indexy a výrezy.</li></ul>", tip: "Teraz test. V ďalšom module sa program naučí rozhodovať: podmienky if a else." },
   ] };
 
   var TEST = [

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head><meta charset="utf-8"><title>Test tlačidla Späť</title></head>
+<body>
+<pre id="vysledky">BEŽÍ</pre>
+<iframe id="app" src="../web/index.html#domov" style="width:412px;height:900px"></iframe>
+<script>
+var out = [], chyby = 0;
+function ok(podm, s) { if (podm) out.push("OK: " + s); else { chyby++; out.push("CHYBA: " + s); } }
+function pauza(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+var spustene = false;
+document.getElementById("app").onload = async function () {
+  if (spustene) { out.push("(iframe sa načítal znova: " + this.contentWindow.location.hash + ")"); return; } spustene = true;
+  var w = this.contentWindow, d = w.document, K = w.K;
+  try {
+    // lekcia 1 kurzu HTML – prvý krok je výklad
+    w.location.hash = "lekcia-html-1-1"; await pauza(300);
+    var predch = d.querySelector("[data-predch]");
+    ok(predch && predch.hidden, "na prvom kroku je šípka späť skrytá");
+    var text0 = d.querySelector(".lekcia-telo").textContent;
+    d.querySelector("[data-hlavne]").click(); await pauza(100);
+    ok(!predch.hidden, "na druhom kroku je šípka späť viditeľná");
+    var text1 = d.querySelector(".lekcia-telo").textContent;
+    ok(text1 !== text0, "posun na ďalší krok zmenil obsah");
+    predch.click(); await pauza(100);
+    ok(d.querySelector(".lekcia-telo").textContent === text0, "šípka späť vrátila prvý krok");
+    ok(d.querySelector("[data-hlavne]").textContent === "Pokračovať" && !d.querySelector("[data-hlavne]").disabled, "na vrátenom kroku sa dá pokračovať");
+    d.querySelector("[data-hlavne]").click(); await pauza(100);
+    ok(d.querySelector(".lekcia-telo").textContent === text1, "dopredu sa vráti ten istý (zapamätaný) krok");
+    // Android späť: o krok späť
+    ok(K.androidSpat() === true && d.querySelector(".lekcia-telo").textContent === text0, "Android späť v lekcii ide o krok späť");
+    // na prvom kroku: otázka na odchod
+    K.androidSpat(); await pauza(50);
+    ok(!d.querySelector(".lekcia-dole .potvrd").hidden, "Android späť na prvom kroku ukáže otázku Odísť");
+    d.querySelector("[data-odist]").click(); await pauza(200);
+    ok(w.location.hash === "#kurz-html", "Odísť vráti na kurz (" + w.location.hash + ")");
+    K.androidSpat(); await pauza(200);
+    ok(w.location.hash === "#domov", "z kurzu Android späť ide domov (" + w.location.hash + ")");
+    ok(K.androidSpat() === false, "na domovskej obrazovke Android späť zavrie aplikáciu");
+    w.location.hash = "slovnik-css"; await pauza(200); K.androidSpat(); await pauza(200);
+    ok(w.location.hash === "#slovnik", "slovník kurzu → slovník (" + w.location.hash + ")");
+    for (var n = 1; n <= 5; n++) K.stav.hotove["html-1-" + n] = true;
+    w.location.hash = "test-html-1"; await pauza(200);
+    ok(d.querySelector("[data-zacat]"), "úvod testu sa zobrazil"); K.androidSpat(); await pauza(200);
+    ok(w.location.hash === "#kurz-html", "test → kurz (" + w.location.hash + ")");
+  } catch (e) { chyby++; out.push("VÝNIMKA: " + e.message + " " + e.stack); }
+  out.push(chyby ? "ZLYHALO: " + chyby : "VŠETKO OK");
+  document.getElementById("vysledky").textContent = out.join("\n");
+};
+</script>
+</body>
+</html>

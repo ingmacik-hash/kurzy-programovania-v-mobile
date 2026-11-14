@@ -68,12 +68,23 @@
       return span("t-sel", m[6]);
     });
   }
+  var SQL_KW = "SELECT|FROM|WHERE|AND|OR|NOT|IN|IS|NULL|LIKE|BETWEEN|ORDER|BY|ASC|DESC|LIMIT|OFFSET|GROUP|HAVING|AS|DISTINCT|JOIN|INNER|LEFT|RIGHT|OUTER|ON|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|DROP|ALTER|ADD|PRIMARY|KEY|FOREIGN|REFERENCES|UNIQUE|DEFAULT|CHECK|INTEGER|TEXT|REAL|CASE|WHEN|THEN|ELSE|END|UNION|ALL|EXISTS|AUTOINCREMENT";
+  function hlSql(src) {
+    return tokenizuj(src, new RegExp("(--.*)|('(?:''|[^'])*'?)|\\b(\\d+\\.?\\d*)\\b|\\b(" + SQL_KW + ")\\b|\\b(COUNT|SUM|AVG|MIN|MAX|ROUND|LENGTH|UPPER|LOWER|SUBSTR|COALESCE|IFNULL|ABS|DATE|STRFTIME|REPLACE|TRIM)(?=\\s*\\()", "gi"), function (m) {
+      if (m[1]) return span("t-com", m[1]);
+      if (m[2]) return span("t-str", m[2]);
+      if (m[3]) return span("t-num", m[3]);
+      if (m[4]) return span("t-kw", m[4]);
+      return span("t-sel", m[5]);
+    });
+  }
   K.zvyrazni = function (src, jazyk) {
     if (jazyk === "css") return hlCss(src);
     if (jazyk === "js") return hlJs(src);
     if (jazyk === "html") return hlHtml(src);
     if (jazyk === "py" || jazyk === "python") return hlPy(src);
     if (jazyk === "cpp") return hlCpp(src);
+    if (jazyk === "sql") return hlSql(src);
     return esc(src);
   };
 
@@ -152,6 +163,8 @@
     [/^KeyError$/, /(.*)/, "Kľúč $1 v slovníku neexistuje."],
     [/^AttributeError$/, /'(.+)' object has no attribute '(.+)'/, "Typ $1 nemá $2. Nepreklepol si sa?"],
     [/^RecursionError$/, /./, "Funkcia volá sama seba donekonečna."],
+    [/^Zastavene$/, /./, "Program sa točí príliš dlho a zastavil som ho. Asi je to nekonečný cyklus: skontroluj, či sa podmienka cyklu niekedy stane nepravdivou (napr. či zvyšuješ počítadlo)."],
+    [/^Zastavene$/, /./, "Program sa točí príliš dlho a zastavil som ho. Asi je to nekonečný cyklus: skontroluj, či sa podmienka cyklu niekedy stane nepravdivou (napr. či zvyšuješ počítadlo)."],
   ];
   K.prelozPyChybu = function (typ, sprava) {
     for (var i = 0; i < PY_CHYBY.length; i++) {
@@ -197,10 +210,22 @@
     __BRYTHON__.runPythonSource(["import sys, builtins", "from browser import window", "class Vystup:", "  def write(self, s): window.pyVystup(s)", "  def flush(self): pass",
       "sys.stdout = Vystup()", "sys.stderr = Vystup()",
       "def vstup(p=''):", "  print(p, end='')", "  v = window.pyCitaj()", "  print(v)", "  return v", "builtins.input = vstup",
-      "def spusti(src):", "  try:", "    exec(compile(src, 'program', 'exec'), {'__name__': '__main__'})", "  except SyntaxError as e:", "    window.pyChyba(type(e).__name__, str(e.msg), e.lineno or 0)",
+      "class Zastavene(Exception): pass", "_poc = [0]", "def _sc_k():", "  _poc[0] += 1", "  if _poc[0] > 300000: raise Zastavene('cyklus')", "  return True",
+      "def _sc_it(it):", "  for x in it:", "    _sc_k()", "    yield x",
+      "def spusti(src):", "  _poc[0] = 0", "  try:", "    exec(compile(src, 'program', 'exec'), {'__name__': '__main__', '_sc_k': _sc_k, '_sc_it': _sc_it})", "  except SyntaxError as e:", "    window.pyChyba(type(e).__name__, str(e.msg), e.lineno or 0)",
       "  except BaseException as e:", "    tb = e.__traceback__", "    r = 0", "    while tb is not None:", "      if tb.tb_frame.f_code.co_filename == 'program': r = tb.tb_lineno", "      tb = tb.tb_next",
       "    window.pyChyba(type(e).__name__, str(e), r)", "window.pySpusti = spusti"].join("\n"));
   }
+  /* Poistka proti nekonečnému cyklu: hlavičky while/for sa obalia počítadlom (čísla riadkov ostanú rovnaké). */
+  K.pyStraz = function (src) {
+    return src.split("\n").map(function (r) {
+      var m = /^(\s*)while\s+(.+):\s*(#.*)?$/.exec(r);
+      if (m) return m[1] + "while _sc_k() and (" + m[2] + "):";
+      m = /^(\s*)for\s+(.+?)\s+in\s+(.+):\s*(#.*)?$/.exec(r);
+      if (m) return m[1] + "for " + m[2] + " in _sc_it(" + m[3] + "):";
+      return r;
+    }).join("\n");
+  };
   K.nacitajPython = function (cb) {
     if (py.stav === 2) return cb(true);
     py.cakaju.push(cb);
@@ -223,11 +248,22 @@
       if (!ok) return cb({ vystup: "", chyba: { sprava: "Python sa nepodarilo načítať.", riadok: 0, preklad: "Python sa nepodarilo načítať. Skús aplikáciu reštartovať." } });
       py.out = []; py.chyba = null; window.pyVstupy = (vstupy || []).slice();
       setTimeout(function () {
-        try { window.pySpusti(kod); } catch (e) { py.chyba = { typ: "Chyba", sprava: String(e && e.message || e), riadok: 0 }; }
+        try { window.pySpusti(K.pyStraz(kod)); } catch (e) { py.chyba = { typ: "Chyba", sprava: String(e && e.message || e), riadok: 0 }; }
         var ch = py.chyba; if (ch) ch.preklad = K.prelozPyChybu(ch.typ, ch.sprava);
         cb({ vystup: py.out.join(""), chyba: ch });
       }, 10);
     });
+  };
+
+  /* Synchrónne spustenie (Python už musí byť načítaný) – na kontroly s viacerými vstupmi. Vráti {vystup, chyba}. */
+  K.spustiPythonHned = function (kod, vstupy) {
+    if (py.stav !== 2) return { vystup: "", chyba: { typ: "Chyba", sprava: "Python nie je načítaný", riadok: 0 } };
+    var star = { out: py.out, chyba: py.chyba, vstupy: window.pyVstupy };
+    py.out = []; py.chyba = null; window.pyVstupy = (vstupy || []).slice();
+    try { window.pySpusti(K.pyStraz(kod)); } catch (e) { py.chyba = { typ: "Chyba", sprava: String(e && e.message || e), riadok: 0 }; }
+    var v = { vystup: py.out.join(""), chyba: py.chyba };
+    py.out = star.out; py.chyba = star.chyba; window.pyVstupy = star.vstupy;
+    return v;
   };
 
   /* ---------- spustenie C++ (online prekladač, potrebuje internet) ---------- */
@@ -278,6 +314,95 @@
     });
   };
 
+  /* ---------- SQL (sql.js bez WebAssembly – beží offline v telefóne) ---------- */
+  var sqlS = { stav: 0, cakaju: [], SQL: null, db: null };
+  K.nacitajSql = function (cb) {
+    if (sqlS.stav === 2) return cb(true);
+    sqlS.cakaju.push(cb);
+    if (sqlS.stav === 1) return;
+    sqlS.stav = 1;
+    function koniec(ok) { sqlS.stav = ok ? 2 : 0; var c = sqlS.cakaju; sqlS.cakaju = []; c.forEach(function (f) { f(ok); }); }
+    var s = document.createElement("script"); s.src = "lib/sql-asm.js";
+    s.onload = function () { try { window.initSqlJs().then(function (SQL) { sqlS.SQL = SQL; koniec(true); }, function () { koniec(false); }); } catch (e) { koniec(false); } };
+    s.onerror = function () { koniec(false); };
+    document.head.appendChild(s);
+  };
+  var SQL_CHYBY = [
+    [/no such table: (\S+)/, "Tabuľka „$1“ neexistuje. Skontroluj názov tabuľky (zoznam tabuliek je v zadaní)."],
+    [/no such column: (\S+)/, "Stĺpec „$1“ neexistuje. Skontroluj jeho názov, prípadne či je v tabuľke, z ktorej vyberáš. Text patrí do apostrofov: 'Bratislava'."],
+    [/ambiguous column name: (\S+)/, "Stĺpec „$1“ je vo viacerých tabuľkách. Napíš pred neho názov tabuľky, napríklad zakaznici.$1."],
+    [/misuse of aggregate(?: function)? (\w+)?/, "Agregačnú funkciu $1 nemôžeš použiť vo WHERE. Podmienku na skupiny píš do HAVING (za GROUP BY)."],
+    [/incomplete input/, "Príkaz nie je dokončený. Chýba koniec, napríklad zatváracia zátvorka alebo apostrof."],
+    [/unrecognized token: "?(.+?)"?$/, "Neznámy znak alebo neukončený text pri $1. Text musí byť v apostrofoch na oboch stranách."],
+    [/near "(.+?)": syntax error/, "Syntaktická chyba pri „$1“. Skontroluj čiarky medzi stĺpcami, apostrofy a poradie častí: SELECT … FROM … WHERE … GROUP BY … HAVING … ORDER BY … LIMIT."],
+    [/UNIQUE constraint failed: (\S+)/, "V stĺpci $1 už taká hodnota je, a musí byť jedinečná."],
+    [/NOT NULL constraint failed: (\S+)/, "Stĺpec $1 nesmie zostať prázdny (NULL)."],
+    [/CHECK constraint failed/, "Hodnota nespĺňa pravidlo (CHECK) zadané pri vytvorení tabuľky."],
+    [/FOREIGN KEY constraint failed/, "Porušený cudzí kľúč: buď odkazuješ na riadok, ktorý neexistuje, alebo mažeš riadok, na ktorý ešte odkazuje iná tabuľka (napríklad položky objednávky). Najprv zmaž tie."],
+    [/table (\S+) has (\d+) columns but (\d+) values were supplied/, "Tabuľka $1 má $2 stĺpce, ale zadal si $3 hodnoty. Vymenuj stĺpce alebo doplň hodnoty."],
+    [/(\d+) values for (\d+) columns/, "Zadal si $1 hodnoty pre $2 stĺpce. Počty musia sedieť."],
+    [/table (\S+) already exists/, "Tabuľka $1 už existuje."],
+    [/no such function: (\S+)/, "Funkcia $1 v SQL (SQLite) neexistuje."],
+    [/wrong number of arguments to function (\S+)/, "Funkcia $1 dostala nesprávny počet hodnôt v zátvorke."],
+    [/a GROUP BY clause is required before HAVING/, "HAVING sa dá použiť len spolu s GROUP BY."],
+    [/ORDER BY term out of range/, "Číslo za ORDER BY je väčšie ako počet vybraných stĺpcov."],
+    [/You can only execute one statement at a time|cannot start a transaction/, "Tento príkaz sa tu nedá použiť."],
+  ];
+  K.prelozSqlChybu = function (sprava) {
+    for (var i = 0; i < SQL_CHYBY.length; i++) { var m = SQL_CHYBY[i][0].exec(sprava); if (m) return SQL_CHYBY[i][1].replace(/\$(\d)/g, function (_, n) { return m[+n] || ""; }).replace(/\s+\(/, " ("); }
+    return "Chyba v SQL: " + sprava;
+  };
+  /* cb({ vystup (text), tabulka:{stlpce, riadky} (výsledok posledného SELECT-u), vysledky:[…], zmenene, dotaz(sql) → tabulka, chyba }) */
+  function naTabulku(v) { return v ? { stlpce: v.columns, riadky: v.values } : null; }
+  K.spustiSql = function (kod, databaza, cb) {
+    K.nacitajSql(function (ok) {
+      if (!ok) return cb({ vystup: "", chyba: { sprava: "sql", preklad: "Databázu sa nepodarilo pripraviť. Skús aplikáciu reštartovať.", riadok: 0 } });
+      if (sqlS.db) { try { sqlS.db.close(); } catch (e) {} }
+      var db = sqlS.db = new sqlS.SQL.Database();
+      try { db.run("PRAGMA foreign_keys = ON;"); if (databaza) db.run(databaza); } catch (e) { return cb({ vystup: "", chyba: { sprava: e.message, preklad: "Pripravená databáza sa nenačítala: " + e.message, riadok: 0 } }); }
+      var dotaz = function (q) { try { return naTabulku(db.exec(q).pop()); } catch (e) { return null; } };
+      var pred = db.exec("SELECT total_changes()")[0].values[0][0], vys = [], chyba = null;
+      if (!/\S/.test(kod.replace(/--.*$/gm, ""))) chyba = { sprava: "prázdne", preklad: "Editor je prázdny. Napíš SQL príkaz.", riadok: 0 };
+      else try { vys = db.exec(kod); } catch (e) {
+        chyba = { sprava: e.message, preklad: K.prelozSqlChybu(e.message), riadok: 0 };
+        var m = /near "(.+?)"/.exec(e.message);
+        if (m) { var ix = kod.indexOf(m[1]); if (ix >= 0) chyba.riadok = kod.slice(0, ix).split("\n").length; }
+      }
+      var zmenene = db.exec("SELECT total_changes()")[0].values[0][0] - pred, tab = naTabulku(vys[vys.length - 1]);
+      var text = tab ? [tab.stlpce.join(" | ")].concat(tab.riadky.map(function (r) { return r.map(function (x) { return x === null ? "NULL" : String(x); }).join(" | "); })).join("\n") : "";
+      /* cista(prikazy, kontrolny): spustí príkazy nad čistou kópiou databázy a vráti výsledok kontrolného dotazu (na porovnanie so vzorom) */
+      var cista = function (prikazy, kontrolny) {
+        var d2 = new sqlS.SQL.Database();
+        try { d2.run("PRAGMA foreign_keys = ON;"); if (databaza) d2.run(databaza); var v = d2.exec(prikazy || ""); if (kontrolny) v = d2.exec(kontrolny); return naTabulku(v.pop()); }
+        catch (e) { return null; } finally { d2.close(); }
+      };
+      cb({ vystup: text, tabulka: tab, vysledky: vys.map(naTabulku), zmenene: zmenene, dotaz: dotaz, cista: cista, chyba: chyba });
+    });
+  };
+  /* HTML tabuľka výsledku dotazu */
+  K.sqlTabulkaHtml = function (t, max) {
+    max = max || 60;
+    if (!t) return "";
+    var h = '<div class="sql-vysledok"><table><thead><tr>' + t.stlpce.map(function (c) { return "<th>" + esc(c) + "</th>"; }).join("") + "</tr></thead><tbody>";
+    t.riadky.slice(0, max).forEach(function (r) { h += "<tr>" + r.map(function (x) { return x === null ? '<td class="null">NULL</td>' : "<td" + (typeof x === "number" ? ' class="cis"' : "") + ">" + esc(String(x)) + "</td>"; }).join("") + "</tr>"; });
+    h += "</tbody></table></div>";
+    return h + '<small class="sql-pocet">' + (t.riadky.length === 1 ? "1 riadok" : t.riadky.length + (t.riadky.length >= 2 && t.riadky.length <= 4 ? " riadky" : " riadkov")) + (t.riadky.length > max ? ", zobrazených prvých " + max : "") + "</small>";
+  };
+  /* Živé ukážky v lekciách: <div class="sql-ziva" data-q="…"> sa doplnia výsledkom dotazu nad databázou kurzu. */
+  function doplnZiveSql() {
+    var e = document.querySelectorAll(".sql-ziva:not([data-hotove])"); if (!e.length) return;
+    K.nacitajSql(function (ok) {
+      [].forEach.call(document.querySelectorAll(".sql-ziva:not([data-hotove])"), function (x) {
+        x.dataset.hotove = 1;
+        if (!ok) { x.textContent = "Ukážku sa nepodarilo spustiť."; return; }
+        var db = new sqlS.SQL.Database();
+        try { db.run(K.sqlDatabaza || ""); x.innerHTML = K.sqlTabulkaHtml(naTabulku(db.exec(x.dataset.q).pop()), 12); } catch (er) { x.textContent = er.message; }
+        db.close();
+      });
+    });
+  }
+  if (window.MutationObserver) new MutationObserver(function () { clearTimeout(doplnZiveSql.t); doplnZiveSql.t = setTimeout(doplnZiveSql, 30); }).observe(document.documentElement, { childList: true, subtree: true });
+
   /* ---------- zostavenie stránky pre náhľad ---------- */
   var CHYBY_SKRIPT = "<script>window.__vystup=[];(function(){function t(x){if(x===undefined)return'undefined';if(typeof x==='string')return x;if(typeof x==='function')return'funkcia '+(x.name||'');try{return JSON.stringify(x)}catch(e){return String(x)}}" +
     "function f(typ){return function(){var a=[].map.call(arguments,t).join(' ');window.__vystup.push(a);try{parent.postMessage({syntaxLog:a,typ:typ},'*')}catch(e){}}}" +
@@ -313,8 +438,9 @@
     js: ["Tab", "(", ")", "{", "}", "[", "]", ";", "=", "\"", "'", "+", ".", "<", ">", "!", "&", "|", ","],
     py: ["Tab", "(", ")", ":", "=", "\"", "'", "[", "]", "{", "}", "+", "-", "*", "/", "<", ">", "#", ","],
     cpp: ["Tab", ";", "{", "}", "(", ")", "<", ">", "=", "\"", "[", "]", "+", "-", "*", "/", "&", "|", "!", "#", ":", ","],
+    sql: ["Tab", "*", ",", ";", "(", ")", "'", "=", "<", ">", "%", ".", "_"],
   };
-  var NAZVY = { html: "HTML", css: "CSS", js: "JS", py: "Python", cpp: "C++" };
+  var NAZVY = { html: "HTML", css: "CSS", js: "JS", py: "Python", cpp: "C++", sql: "SQL" };
   var PARY = { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" };
 
   /* opts: { subory:{html,css,js}, karty:["html",...], aktivna, vyska, onZmena(subory) } */
@@ -436,7 +562,7 @@
   K.Vystup = function (opts) {
     var el = K.el('<div class="nahlad vystup-panel">' +
       (opts.vstup !== undefined ? '<label class="vstup"><span class="stitok">Vstup · každá hodnota na novom riadku</span><textarea rows="2" spellcheck="false" autocapitalize="off"></textarea></label>' : "") +
-      '<div class="vystup-hlava"><div class="stitok"><i></i>Výstup</div><button type="button" class="btn sek spustit">▶ Spustiť</button></div><pre class="vystup tlmene">Ťukni na ▶ Spustiť a uvidíš, čo program vypíše.</pre></div>');
+      '<div class="vystup-hlava"><div class="stitok"><i></i>' + (opts.jazyk === "sql" ? "Výsledok" : "Výstup") + '</div><button type="button" class="btn sek spustit">▶ Spustiť</button></div><pre class="vystup tlmene">' + (opts.jazyk === "sql" ? "Ťukni na ▶ Spustiť a uvidíš výsledok dotazu." : "Ťukni na ▶ Spustiť a uvidíš, čo program vypíše.") + '</pre></div>');
     var pre = el.querySelector("pre"), ta = el.querySelector("textarea"), tl = el.querySelector(".spustit");
     if (ta) ta.value = opts.vstup;
     function vstup() { return ta ? ta.value : ""; }
@@ -448,9 +574,16 @@
         pre.className = "vystup" + (r.chyba ? " s-chybou" : "");
         pre.textContent = (r.vystup || "") + (r.chyba ? (r.vystup ? "\n" : "") + "⚠ " + (r.chyba.riadok ? "Riadok " + r.chyba.riadok + ": " : "") + r.chyba.preklad : "");
         if (!r.vystup && !r.chyba) { pre.className = "vystup tlmene"; pre.textContent = "(program nič nevypísal)"; }
+        if (opts.jazyk === "sql") {
+          pre.className = "vystup sql" + (r.chyba ? " s-chybou" : "");
+          if (r.chyba) pre.textContent = "⚠ " + r.chyba.preklad;
+          else if (r.tabulka) pre.innerHTML = K.sqlTabulkaHtml(r.tabulka) + (r.zmenene ? '<small class="sql-pocet">Zmenené riadky: ' + r.zmenene + "</small>" : "");
+          else { pre.className = "vystup sql tlmene"; pre.textContent = "Príkaz prebehol. " + (r.zmenene ? "Zmenené riadky: " + r.zmenene + "." : "Nevrátil žiadnu tabuľku."); }
+        }
         if (cb) cb(r);
       };
-      if (opts.jazyk === "cpp") K.spustiCpp(kod, vstup(), hotovo);
+      if (opts.jazyk === "sql") { pre.textContent = "Spúšťam dotaz…"; K.spustiSql(kod, opts.databaza, hotovo); }
+      else if (opts.jazyk === "cpp") K.spustiCpp(kod, vstup(), hotovo);
       else K.spustiPython(kod, vstup().split("\n").filter(function (x, i, a) { return x !== "" || i < a.length - 1; }), hotovo);
     }
     tl.onclick = function () { if (opts.spusti) spusti(opts.spusti()); };

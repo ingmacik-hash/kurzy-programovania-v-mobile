@@ -33,7 +33,7 @@
 
   TYPY.volba = function (k, hotovo) {
     var poradie = K.zamiesaj(k.moznosti.map(function (_, i) { return i; })), vybrata = -1;
-    var el = K.el('<div class="vyklad"><p class="otazka"></p>' + (k.kod ? K.blokKodu(k.kod, k.jazyk) : "") + '<div class="moznosti" role="radiogroup"></div></div>');
+    var el = K.el('<div class="vyklad"><p class="otazka"></p>' + (k.kod ? K.blokKodu(k.kod, k.jazyk || K.jazykKurzu) : "") + '<div class="moznosti" role="radiogroup"></div></div>');
     el.querySelector(".otazka").innerHTML = k.otazka;
     var box = el.querySelector(".moznosti");
     box.innerHTML = poradie.map(function (i, p) {
@@ -94,7 +94,7 @@
     if (zdroj.every(function (v, i) { return v === i; }) && zdroj.length > 1) zdroj.reverse();
     var el = K.el('<div class="vyklad"><p class="otazka"></p><div class="poradie-ciel"></div><div class="poradie-zdroj"></div></div>');
     el.querySelector(".otazka").innerHTML = k.otazka;
-    function riadok(i) { return '<button type="button" class="riadok-kod" data-r="' + i + '">' + K.zvyrazni(k.riadky[i], k.jazyk || "html") + "</button>"; }
+    function riadok(i) { return '<button type="button" class="riadok-kod" data-r="' + i + '">' + K.zvyrazni(k.riadky[i], k.jazyk || K.jazykKurzu || "html") + "</button>"; }
     function obnov() {
       el.querySelector(".poradie-ciel").innerHTML = ciel.map(riadok).join("");
       el.querySelector(".poradie-zdroj").innerHTML = zdroj.map(riadok).join("");
@@ -124,8 +124,8 @@
      Programy (py, cpp) sa spustia a kontroluje sa ich výstup: kontrola(vystup, kod, vysledok). */
   K.UlohaKod = function (k, hotovo, nastavenia) {
     nastavenia = nastavenia || {};
-    var karty = k.karty || ["html"], program = karty[0] === "py" || karty[0] === "cpp";
-    var start = {}; ["html", "css", "js", "py", "cpp"].forEach(function (x) { start[x] = (k.start && k.start[x]) || ""; });
+    var karty = k.karty || ["html"], program = karty[0] === "py" || karty[0] === "cpp" || karty[0] === "sql";
+    var start = {}; ["html", "css", "js", "py", "cpp", "sql"].forEach(function (x) { start[x] = (k.start && k.start[x]) || ""; });
     var subory = nastavenia.subory || JSON.parse(JSON.stringify(start));
     var el = K.el('<div class="editor-krok"><div class="zadanie"></div><div class="chyba-box" hidden></div></div>');
     el.querySelector(".zadanie").innerHTML = (nastavenia.bezNadpisu ? "" : "<b>Úloha:</b> ") + k.zadanie + (k.napoveda ? ' <button type="button" class="btn sek" data-napoveda style="min-height:34px;padding:5px 12px;font-size:13.5px;margin-top:8px;display:flex">Nápoveda</button><div class="tip" data-tip hidden style="margin-top:8px"></div>' : "");
@@ -134,7 +134,7 @@
     ed = K.Editor({ subory: subory, karty: karty, aktivna: k.aktivna, vyska: k.vyska || "200px", onZmena: zmenene });
     el.insertBefore(ed.el, chyba);
     if (program) {
-      vystup = K.Vystup({ jazyk: karty[0], vstup: k.vstup, spusti: function () { chyba.hidden = true; ed.oznacChybu(0); return ed.subory()[karty[0]]; } });
+      vystup = K.Vystup({ jazyk: karty[0], vstup: k.vstup, databaza: k.databaza !== undefined ? k.databaza : K.sqlDatabaza, spusti: function () { chyba.hidden = true; ed.oznacChybu(0); return ed.subory()[karty[0]]; } });
       var povodne = vystup.spusti;
       vystup.spusti = function (kod, cb) { povodne(kod, function (r) { if (r.chyba && r.chyba.riadok) ed.oznacChybu(r.chyba.riadok); if (cb) cb(r); }); };
       el.appendChild(vystup.el);
@@ -203,19 +203,44 @@
   /* ---------- prehrávač ----------
      opts: { kroky:[{krok, qid}], rezim:"lekcia"|"test"|"opakovanie", farba, koniec(vysledok), zavriet() } */
   K.Prehravac = function (opts) {
-    var el = K.el('<div class="lekcia"><div class="lekcia-hore"><button type="button" class="ikona-btn" data-zavriet aria-label="Zavrieť">' + K.ikona.zavriet + '</button><div class="pruh"><i></i></div><span class="chip xp">' + K.ikona.blesk + '<span data-xp>0</span></span></div>' +
+    var el = K.el('<div class="lekcia"><div class="lekcia-hore"><button type="button" class="ikona-btn" data-zavriet aria-label="Zavrieť">' + K.ikona.zavriet + '</button><button type="button" class="ikona-btn" data-predch aria-label="Predchádzajúci krok" hidden>' + K.ikona.spat + '</button><div class="pruh"><i></i></div><span class="chip xp">' + K.ikona.blesk + '<span data-xp>0</span></span></div>' +
       '<div class="lekcia-telo"><div class="obal"></div></div><div class="lekcia-dole"><div class="spatna-vazba" hidden></div><div class="potvrd" hidden></div><button type="button" class="btn plna" data-hlavne>Skontrolovať</button></div></div>');
     if (opts.farba) el.style.setProperty("--farba", opts.farba);
     var telo = el.querySelector(".lekcia-telo .obal"), dole = el.querySelector(".lekcia-dole"), sv = el.querySelector(".spatna-vazba"),
         tl = el.querySelector("[data-hlavne]"), potvrd = el.querySelector(".potvrd"), pruh = el.querySelector(".pruh i");
     var i = -1, akt = null, stav = "odpoved", xp = 0, spravne = 0, otazok = 0, chybneQ = [], zleTeraz = false, start = Date.now();
+    var predchBtn = el.querySelector("[data-predch]"), kesa = [];
+
+    /* Navštívené kroky si pamätáme, aby sa dalo vrátiť späť a znova dopredu bez straty odpovedí. */
+    function ulozKrok() {
+      if (i < 0 || i >= opts.kroky.length || !akt) return;
+      kesa[i] = { akt: akt, stav: stav, zle: zleTeraz, tlT: tl.textContent, tlC: tl.className, tlD: tl.disabled, dC: dole.className, svH: sv.innerHTML, svS: sv.hidden };
+    }
+    function obnovKrok(j) {
+      var c = kesa[j]; i = j; akt = c.akt; stav = c.stav; zleTeraz = c.zle;
+      telo.innerHTML = ""; telo.appendChild(akt.el);
+      tl.textContent = c.tlT; tl.className = c.tlC; tl.disabled = c.tlD; dole.className = c.dC; sv.innerHTML = c.svH; sv.hidden = c.svS;
+      potvrd.hidden = true;
+      el.querySelector(".lekcia-telo").scrollTop = 0;
+      pruh.style.width = (i / opts.kroky.length * 100) + "%";
+      predchBtn.hidden = i <= 0;
+    }
+    function predchadzajuci() {
+      if (i <= 0 || i >= opts.kroky.length) return false;
+      ulozKrok(); obnovKrok(i - 1); return true;
+    }
+    function upratatVsetko() { kesa.forEach(function (c) { if (c && c.akt.upratat && c.akt !== akt) c.akt.upratat(); }); if (akt && akt.upratat) akt.upratat(); }
+    predchBtn.onclick = predchadzajuci;
 
     function dalsi() {
-      if (akt && akt.upratat) akt.upratat();
+      ulozKrok();
+      if (kesa[i + 1]) { obnovKrok(i + 1); return; }
       i++;
+      predchBtn.hidden = i <= 0 || i >= opts.kroky.length;
       if (i >= opts.kroky.length) { koniec(); return; }
       var k = opts.kroky[i].krok;
       zleTeraz = false; stav = "odpoved";
+      var qk = opts.kroky[i].qid; K.jazykKurzu = qk ? ({ python: "py" }[qk.split("-")[0]] || qk.split("-")[0]) : null;
       akt = TYPY[k.typ](k, function (moze) { if (stav === "odpoved") tl.disabled = !moze; });
       telo.innerHTML = ""; telo.appendChild(akt.el);
       el.querySelector(".lekcia-telo").scrollTop = 0;
@@ -252,7 +277,8 @@
       var sek = Math.round((Date.now() - start) / 1000);
       K.pridajCas(sek);
       if (xp) K.pridajXP(xp); else { K.zaznamenajAktivitu(); K.uloz(); }
-      K._spatHandler = null;
+      upratatVsetko(); kesa = []; predchBtn.hidden = true;
+      K._spatHandler = opts.zavriet;
       opts.koniec({ xp: xp, spravne: spravne, otazok: otazok, sekundy: sek, chybne: chybneQ, el: el, telo: telo, dole: dole, tlacidlo: tl });
     }
     function zavriet() {
@@ -265,8 +291,9 @@
       if (e.target.closest("[data-odist]")) { K._spatHandler = null; opts.zavriet(); }
     });
     el.querySelector("[data-zavriet]").onclick = zavriet;
-    K._spatHandler = zavriet;
-    K._upratat = function () { K._spatHandler = null; if (akt && akt.upratat) akt.upratat(); };
+    /* Tlačidlo Späť v Androide: najprv o krok späť, na prvom kroku sa opýta, či odísť. */
+    K._spatHandler = function () { if (!predchadzajuci()) zavriet(); };
+    K._upratat = function () { K._spatHandler = null; upratatVsetko(); };
     dalsi();
     return el;
   };

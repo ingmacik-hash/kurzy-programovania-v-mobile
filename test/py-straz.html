@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="utf-8"><title>Python: poistka proti nekonečnému cyklu</title></head>
+<body><pre id="vysledky">BEŽÍ</pre>
+<iframe id="app" src="../web/index.html" style="width:400px;height:300px"></iframe>
+<script>
+var spustene = false;
+document.getElementById("app").onload = function () {
+  if (spustene) return; spustene = true;
+  var K = this.contentWindow.K, out = [], chyby = 0;
+  function ok(p, s) { if (!p) chyby++; out.push((p ? "OK: " : "CHYBA: ") + s); }
+  K.nacitajPython(function () {
+    var t0 = Date.now(), a = K.spustiPythonHned("i = 0\nwhile i < 5:\n    print(i)\n");
+    ok(a.chyba && a.chyba.typ === "Zastavene" && a.chyba.riadok === 2, "nekonečný while sa zastaví (" + (a.chyba && a.chyba.typ) + ", riadok " + (a.chyba && a.chyba.riadok) + ", " + (Date.now() - t0) + " ms)");
+    ok(/nekonečný cyklus/.test(K.prelozPyChybu("Zastavene", "cyklus")), "hláška: " + K.prelozPyChybu("Zastavene", "cyklus"));
+    var b = K.spustiPythonHned("while True:\n    pass\n");
+    ok(b.chyba && b.chyba.typ === "Zastavene", "while True: pass sa zastaví");
+    var c = K.spustiPythonHned("s = 0\nfor i in range(100000):\n    s += i\nprint(s)");
+    ok(!c.chyba && c.vystup.trim() === "4999950000", "veľký, ale konečný for prejde (" + c.vystup.trim() + ")");
+    var d = K.spustiPythonHned("for k, v in {'a': 1}.items():  # komentár: x\n    print(k, v)\nx = [i for i in range(3)]\nprint(x)");
+    ok(!d.chyba && d.vystup === "a 1\n[0, 1, 2]\n", "for s rozbalením, komentárom a comprehension");
+    var e = K.spustiPythonHned("def f(n):\n    while n > 0:\n        n -= 1\n    return 'ok'\nclass A:\n    def g(self):\n        for i in range(2):\n            pass\n        return f(3)\nprint(A().g())");
+    ok(!e.chyba && e.vystup.trim() === "ok", "cykly vo funkcii a v metóde triedy");
+    out.unshift(chyby ? "ZLYHALO: " + chyby : "VŠETKO OK");
+    document.getElementById("vysledky").textContent = out.join("\n");
+  });
+};
+</script></body></html>

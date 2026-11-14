@@ -1,9 +1,12 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 // Aplikácia zobrazuje SyntaxCode z assets/web/index.html (kópia priečinka ../web).
 // Po úprave webu spusti: tool/skopiruj_web.sh
+// Beží na Androide aj iOS (WebView v oboch systémoch).
 void main() => runApp(const SyntaxApp());
 
 class SyntaxApp extends StatelessWidget {
@@ -37,15 +40,16 @@ class _SyntaxObrazovkaState extends State<SyntaxObrazovka> {
       ..loadFlutterAsset('assets/web/index.html');
   }
 
-  // Tlačidlo Späť: najprv sa pýtame webu (zatvorí lekciu, vráti sa z kurzu…).
-  // Ak je na domovskej obrazovke, aplikácia sa zavrie.
+  // Späť: najprv sa pýtame webu (krok späť v lekcii, návrat na kurz…).
+  // Na domovskej obrazovke sa aplikácia na Androide zavrie. Na iOS nie –
+  // Apple nepovoľuje, aby sa aplikácia zatvárala sama.
   Future<void> _spat() async {
     var navigoval = false;
     try {
       final r = await _web.runJavaScriptReturningResult('K.androidSpat()');
-      navigoval = r == true || r.toString() == 'true';
+      navigoval = r == true || r.toString() == 'true' || r.toString() == '1';
     } catch (_) {}
-    if (!navigoval) SystemNavigator.pop();
+    if (!navigoval && Platform.isAndroid) SystemNavigator.pop();
   }
 
   @override
@@ -60,7 +64,27 @@ class _SyntaxObrazovkaState extends State<SyntaxObrazovka> {
         value: tmava ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         child: Scaffold(
           backgroundColor: tmava ? const Color(0xFF0C0F17) : const Color(0xFFF3F4F8),
-          body: SafeArea(child: WebViewWidget(controller: _web)),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                WebViewWidget(controller: _web),
+                // iPhone nemá tlačidlo Späť: potiahnutie od ľavého okraja doprava = späť.
+                if (Platform.isIOS)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 16,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragEnd: (d) {
+                        if ((d.primaryVelocity ?? 0) > 200) _spat();
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

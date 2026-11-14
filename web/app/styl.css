@@ -306,3 +306,26 @@ body.bez-menu #spodna{display:none}
 .ziva-ukazka{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:#fff;width:100%;display:block}.kod-obal .kod + .kod{border-radius:0;border-top:1px solid var(--code-line)}
 .len-konzola iframe,.len-konzola > .stitok{display:none}.len-konzola .konzola{border-top:0}.konzola pre:empty::before{content:"Program zatiaľ nič nevypísal. Výpis robí console.log(…).";color:var(--code-muted)}
 .kod.vystup-ukazka{border-radius:0 0 12px 12px;background:#05070c;color:#b5f0b5;border-top:1px solid var(--code-line)}.kod.vystup-ukazka::before{content:"VÝSTUP";display:block;font:700 10.5px var(--f-text);letter-spacing:.07em;color:var(--code-muted);margin-bottom:4px}
+/* SQL: výsledok dotazu ako tabuľka */
+.vystup.sql{white-space:normal;max-height:300px}
+.sql-vysledok{overflow-x:auto;max-width:100%}
+.sql-vysledok table{border-collapse:collapse;font:12.5px/1.4 var(--f-code);min-width:100%}
+.sql-vysledok th{position:sticky;top:0;background:var(--code-line);color:var(--code-text);text-align:left;font-weight:700;padding:5px 9px;white-space:nowrap}
+.sql-vysledok td{padding:4px 9px;border-top:1px solid var(--code-line);color:var(--code-text);white-space:nowrap}
+.sql-vysledok td.cis{text-align:right;color:var(--hl-num,#f5b86b)}
+.sql-vysledok td.null{color:var(--code-muted);font-style:italic}
+.sql-pocet{display:block;color:var(--code-muted);font:11.5px var(--f-text);margin-top:4px}
+.sql-ziva{background:var(--code-bg);border-radius:0 0 12px 12px;padding:8px 10px 10px;border-top:1px solid var(--code-line);min-height:40px;color:var(--code-muted);font-size:13px}
+.sql-ziva::before{content:"VÝSLEDOK";display:block;font:700 10.5px var(--f-text);letter-spacing:.07em;color:var(--code-muted);margin-bottom:4px}
+.kod-obal .kod + .sql-ziva{margin-top:0}
+.sql-schema{display:flex;flex-wrap:wrap;gap:8px}
+.sql-schema div{background:var(--surface-2);border-radius:10px;padding:8px 10px;font:12.5px/1.5 var(--f-code);min-width:0}
+.sql-schema b{display:block;color:var(--text);font-family:var(--f-text)}
+.sql-schema span{color:var(--muted)}
+/* Licencie */
+.licencia summary{cursor:pointer;display:flex;flex-direction:column;gap:2px;list-style:none}
+.licencia summary::-webkit-details-marker{display:none}
+.licencia summary small{font-size:13px}
+.licencia pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 var(--f-code);background:var(--surface-2);padding:10px;border-radius:10px;margin:0;max-height:320px;overflow:auto}
+/* iOS: bez automatického zväčšovania písma pri otočení a bez zvýraznenia ťuknutia */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}

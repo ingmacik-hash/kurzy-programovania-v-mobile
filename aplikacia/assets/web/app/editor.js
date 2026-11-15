@@ -62,8 +62,21 @@
     c: { kw: "int|double|float|char|void|long|short|unsigned|signed|const|return|if|else|for|while|do|break|continue|switch|case|default|struct|typedef|enum|sizeof|static|NULL|bool|true|false", fn: "printf|scanf|main|strlen|strcpy|strcmp|strcat|sqrt|pow|fgets|puts|malloc|free", pre: true },
     java: { kw: "public|private|protected|class|static|void|int|double|float|long|char|boolean|byte|short|String|final|return|if|else|for|while|do|break|continue|switch|case|default|new|this|null|true|false|import|package|extends|implements|interface|try|catch|throw|throws|var|record|enum", fn: "System|out|println|print|printf|main|Scanner|nextInt|nextLine|nextDouble|Math|ArrayList|List|length|size|add|get|equals" },
     cs: { kw: "using|namespace|public|private|protected|class|struct|static|void|int|double|float|long|char|bool|string|decimal|var|const|readonly|return|if|else|for|foreach|in|while|do|break|continue|switch|case|default|new|this|null|true|false|get|set|override|virtual|interface|try|catch|throw|enum|record", fn: "Console|WriteLine|Write|ReadLine|Main|Parse|Math|List|Length|Count|Add|ToString|ToUpper|Split" },
+    php: { kw: "php|echo|print|function|return|if|elseif|else|for|foreach|as|while|do|break|continue|switch|case|default|match|class|new|public|private|protected|static|const|readonly|true|false|null|array|fn|use|try|catch|throw|int|float|string|bool|void|and|or|not|instanceof|extends|this", fn: "strlen|mb_strlen|strtoupper|strtolower|str_repeat|str_replace|substr|explode|implode|trim|fgets|STDIN|count|sort|rsort|array_sum|array_map|array_filter|in_array|round|intdiv|printf|sprintf|number_format|json_encode|json_decode|var_dump|print_r|max|min|isset|htmlspecialchars|ucfirst" },
     kt: { kw: "fun|val|var|if|else|when|for|while|do|in|is|as|return|break|continue|class|data|object|interface|open|override|private|public|internal|null|true|false|this|until|downTo|step|import|package|enum|companion|lateinit", fn: "println|print|readln|readLine|main|listOf|mutableListOf|mapOf|mutableMapOf|toInt|toDouble|toString|size|forEach|map|filter|sum|maxOrNull|minOrNull|repeat" },
   };
+  /* Smalltalk: komentáre "…", texty '…', symboly #…, znaky $x, kľúčové slová správ (napr. ifTrue:) */
+  function hlSt(src) {
+    return tokenizuj(src, /("[^"]*"?)|('(?:''|[^'])*'?)|(\$.|#[A-Za-z_][\w:]*|#\()|(-?\b\d+(?:\.\d+)?(?:e-?\d+)?\b)|\b(self|super|true|false|nil|thisContext|subclass:|class)\b|([A-Za-z_]\w*:(?!=))|\b(Transcript|stdin|Object|OrderedCollection|Dictionary|Array|Set|String|Error)\b/g, function (m) {
+      if (m[1]) return span("t-com", m[1]);
+      if (m[2]) return span("t-str", m[2]);
+      if (m[3]) return span("t-tag", m[3]);
+      if (m[4]) return span("t-num", m[4]);
+      if (m[5]) return span("t-kw", m[5]);
+      if (m[6]) return span("t-sel", m[6]);
+      return span("t-attr", m[7]);
+    });
+  }
   function hlClike(src, d) {
     return tokenizuj(src, new RegExp("(\\/\\/.*|\\/\\*[\\s\\S]*?(?:\\*\\/|$))|" + (d.pre ? "(#\\s*\\w+)" : "(#\\w+(?!\\w))") + "|(\\$?\"(?:\\\\.|[^\"\\\\\\n])*\"?|'(?:\\\\.|[^'\\\\\\n])*'?|<[a-z_.]+\\.h>)|\\b(\\d+\\.?\\d*[fFLdD]?)\\b|\\b(" + d.kw + ")\\b|\\b(" + d.fn + ")\\b", "gm"), function (m) {
       if (m[1]) return span("t-com", m[1]);
@@ -102,6 +115,7 @@
     if (jazyk === "py" || jazyk === "python") return hlPy(src);
     if (jazyk === "cpp") return hlCpp(src);
     if (HL_CLIKE[jazyk]) return hlClike(src, HL_CLIKE[jazyk]);
+    if (jazyk === "st") return hlSt(src);
     if (jazyk === "sql") return hlSql(src);
     return esc(src);
   };
@@ -453,6 +467,69 @@
   };
   K.spustiCpp = function (kod, vstup, cb) { K.spustiKompil("cpp", kod, vstup, cb); };
 
+  /* ---------- PHP: Wandbox (php-8.3). PHP vypisuje chyby do výstupu, preto ich oddelíme. ---------- */
+  var PHP_CHYBY = [
+    [/syntax error, unexpected end of file/, "Program nečakane skončil: chýba zatváracia zátvorka } alebo úvodzovka."],
+    [/syntax error, unexpected (?:token )?"?([^",]+?)"?(?=,| in |$)/, "Syntaktická chyba pri „$1“. Najčastejšie chýba bodkočiarka ; na konci predchádzajúceho riadku alebo zátvorka."],
+    [/Undefined variable \$(\w+)/, "Premenná $$1 neexistuje. Priradil si jej hodnotu? Skontroluj preklep (PHP rozlišuje veľké a malé písmená v premenných)."],
+    [/Call to undefined function (\w+)\(\)/, "Funkcia $1() neexistuje. Skontroluj preklep, alebo ju najprv definuj."],
+    [/Call to undefined method (\S+)\(\)/, "Metóda $1() neexistuje."],
+    [/DivisionByZeroError|Division by zero|Modulo by zero/, "Delenie nulou. Nulou sa deliť nedá."],
+    [/Undefined array key "?([^"]+)"?/, "Kľúč alebo index $1 v poli neexistuje."],
+    [/Unsupported operand types: (\w+) \S (\w+)/, "Operáciu nemožno použiť na typy $1 a $2."],
+    [/must be of type (\w+), (\w+) given/, "Funkcia čaká typ $1, ale dostala $2."],
+    [/Cannot redeclare (?:function )?(\w+)/, "Funkcia $1 už existuje. Druhýkrát ju nedefinuj."],
+    [/Array to string conversion/, "Pole sa nedá vypísať ako text. Použi print_r(), implode() alebo foreach."],
+    [/Too few arguments to function (\w+)\(\)/, "Funkcia $1() dostala málo argumentov."],
+    [/Cannot (?:re)?assign|Cannot modify readonly property/, "Túto hodnotu nemožno zmeniť (readonly alebo konštanta)."],
+    [/Class "?(\w+)"? not found/, "Trieda $1 neexistuje. Skontroluj meno alebo ju najprv definuj."],
+  ];
+  K.prelozPhpChybu = function (msg) { return prvaZhoda(PHP_CHYBY, msg) || "Chyba v PHP: " + msg; };
+  function phpRozober(text) {
+    var riadky = (text || "").replace(/\r/g, "").split("\n"), out = [], chyba = null, upoz = [], i = 0;
+    while (i < riadky.length) {
+      var m = /^(?:PHP )?(Parse error|Fatal error|Warning|Notice|Deprecated): (.*)$/.exec(riadky[i]);
+      if (!m) { out.push(riadky[i]); i++; continue; }
+      var cele = m[2], j = i + 1;
+      if (m[1] === "Fatal error") { while (j < riadky.length && !/thrown in .* on line \d+/.test(riadky[j - 1]) && /^(Stack trace:|#\d|\s+thrown)/.test(riadky[j])) { cele += "\n" + riadky[j]; j++; } }
+      var ln = /on line (\d+)|\.php:(\d+)/.exec(cele), riadok = ln ? +(ln[1] || ln[2]) : 0;
+      var sprava = cele.split("\n")[0].replace(/ in \/\S+(?: on line \d+|:\d+).*$/, "").replace(/^Uncaught \w+: /, function (x) { return x; });
+      if (m[1] === "Parse error" || m[1] === "Fatal error") { if (!chyba) chyba = { sprava: sprava, preklad: K.prelozPhpChybu(cele), riadok: riadok }; }
+      else upoz.push((riadok ? "Riadok " + riadok + ": " : "") + K.prelozPhpChybu(sprava));
+      i = j;
+    }
+    while (out.length && out[0] === "") out.shift();
+    return { vystup: out.join("\n"), chyba: chyba, upozornenie: upoz.join("\n") };
+  }
+  K.spustiPhp = function (kod, vstup, cb) {
+    var hotovo = false;
+    var t = setTimeout(function () { if (!hotovo) { hotovo = true; cb({ vystup: "", siet: true, chyba: { sprava: "timeout", preklad: "Server PHP neodpovedá. Skontroluj internet a skús znova.", riadok: 0 } }); } }, 90000);
+    function skus(pokus) {
+      fetch("https://wandbox.org/api/compile.json", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ compiler: "php-8.3.12", code: kod, stdin: vstup || "" }) })
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+        .then(function (o) {
+          var vsetko = (o.compiler_error || "") + (o.program_error || "");
+          if (/crun:|Resource temporarily unavailable/.test(vsetko)) {
+            if (pokus < 4) return setTimeout(function () { skus(pokus + 1); }, 1500 * (pokus + 1));
+            if (hotovo) return; hotovo = true; clearTimeout(t);
+            return cb({ vystup: "", siet: true, chyba: { sprava: "preťažené", preklad: "Server na spúšťanie PHP je práve preťažený. Počkaj chvíľu a skús znova.", riadok: 0 } });
+          }
+          if (hotovo) return; hotovo = true; clearTimeout(t);
+          var v = phpRozober((o.program_output || "") + (o.program_error ? "\n" + o.program_error : ""));
+          if (!v.chyba && /Killed|CPU|Time/i.test(o.signal || "")) v.chyba = { sprava: "timeout", preklad: "Program bežal príliš dlho (nekonečný cyklus?) a bol zastavený.", riadok: 0 };
+          cb(v);
+        })
+        .catch(function () {
+          if (hotovo) return;
+          /* aj pri 429 Too Many Requests: počkaj stále dlhšie a skús znova */
+          if (pokus < 5) return setTimeout(function () { skus(pokus + 1); }, 2500 * (pokus + 1));
+          hotovo = true; clearTimeout(t);
+          cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: "PHP sa spúšťa na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } });
+        });
+    }
+    skus(0);
+  };
+
   /* ---------- Kotlin: Kotlin Playground (api.kotlinlang.org) ---------- */
   /* Playground nevie čítať vstup, preto na koniec programu pridáme vlastné readln/readLine so vstupom ako zoznamom riadkov
      (deklarácie v tom istom súbore majú prednosť pred kotlin.io; čísla riadkov programu sa nezmenia). */
@@ -507,8 +584,8 @@
         cb({ vystup: "", siet: true, chyba: { sprava: "Bez spojenia", preklad: "Kotlin sa spúšťa na internete a spojenie sa nepodarilo. Zapni dáta alebo Wi-Fi a skús znova.", riadok: 0 } });
       });
   };
-  K.PREKLADANE = ["cpp", "c", "java", "cs", "kt"];
-  K.PROGRAMY = ["py", "sql"].concat(K.PREKLADANE);
+  K.PREKLADANE = ["cpp", "c", "java", "cs", "kt", "php"];
+  K.PROGRAMY = ["py", "sql", "st"].concat(K.PREKLADANE);
 
   /* ---------- SQL (sql.js bez WebAssembly – beží offline v telefóne) ---------- */
   var sqlS = { stav: 0, cakaju: [], SQL: null, db: null };
@@ -639,8 +716,10 @@
     java: ["Tab", ";", "{", "}", "(", ")", "\"", ".", "[", "]", "=", "<", ">", "+", "-", "*", "/", "&", "|", "!", ","],
     cs: ["Tab", ";", "{", "}", "(", ")", "\"", ".", "$", "[", "]", "=", "<", ">", "+", "-", "*", "/", "&", "|", "!", ","],
     kt: ["Tab", "(", ")", "{", "}", "\"", ".", "$", "[", "]", "=", "<", ">", "+", "-", "*", "/", ":", "?", "!", ","],
+    st: ["Tab", ":=", "[", "]", ":", "|", "^", "'", "#", "$", ".", ";", "(", ")", "+", "-", "*", "/", "<", ">", "="],
+    php: ["Tab", "$", ";", "(", ")", "{", "}", "\"", "'", ".", "=", ">", "[", "]", "<", "-", "+", "*", "/", "!", "&", "|", ","],
   };
-  var NAZVY = { html: "HTML", css: "CSS", js: "JS", py: "Python", cpp: "C++", sql: "SQL", c: "C", java: "Java", cs: "C#", kt: "Kotlin" };
+  var NAZVY = { html: "HTML", css: "CSS", js: "JS", py: "Python", cpp: "C++", sql: "SQL", c: "C", java: "Java", cs: "C#", kt: "Kotlin", php: "PHP", st: "Smalltalk" };
   var PARY = { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" };
 
   /* opts: { subory:{html,css,js}, karty:["html",...], aktivna, vyska, onZmena(subory) } */
@@ -652,7 +731,7 @@
     var ta = el.querySelector("textarea"), pre = el.querySelector("pre"), code = el.querySelector("code"),
         cisla = el.querySelector(".ed-cisla"), pas = el.querySelector(".ed-chyba-riadok"), znaky = el.querySelector(".znaky"), vnutri = false, chybaRiadok = 0;
 
-    function TAB() { return akt === "py" || K.PREKLADANE.indexOf(akt) >= 0 ? "    " : "  "; }
+    function TAB() { return akt === "py" || akt === "st" || K.PREKLADANE.indexOf(akt) >= 0 ? "    " : "  "; }
     el.querySelector(".ed-karty").innerHTML = karty.map(function (k) { return '<button type="button" data-k="' + k + '">' + NAZVY[k] + "</button>"; }).join("");
     function prekresli() {
       code.innerHTML = K.zvyrazni(ta.value, akt) + "\n";
@@ -774,6 +853,7 @@
         pre.className = "vystup" + (r.chyba ? " s-chybou" : "");
         pre.textContent = (r.vystup || "") + (r.chyba ? (r.vystup ? "\n" : "") + "⚠ " + (r.chyba.riadok ? "Riadok " + r.chyba.riadok + ": " : "") + r.chyba.preklad : "");
         if (!r.vystup && !r.chyba) { pre.className = "vystup tlmene"; pre.textContent = "(program nič nevypísal)"; }
+        if (r.upozornenie) pre.textContent += "\n\n⚠ Upozornenie PHP:\n" + r.upozornenie;
         if (opts.jazyk === "sql") {
           pre.className = "vystup sql" + (r.chyba ? " s-chybou" : "");
           if (r.chyba) pre.textContent = "⚠ " + r.chyba.preklad;
@@ -784,6 +864,8 @@
       };
       if (opts.jazyk === "sql") { pre.textContent = "Spúšťam dotaz…"; K.spustiSql(kod, opts.databaza, hotovo); }
       else if (opts.jazyk === "kt") K.spustiKotlin(kod, vstup(), hotovo);
+      else if (opts.jazyk === "php") K.spustiPhp(kod, vstup(), hotovo);
+      else if (opts.jazyk === "st") K.spustiSmalltalk(kod, vstup(), hotovo);
       else if (K.PREKLADANE.indexOf(opts.jazyk) >= 0) K.spustiKompil(opts.jazyk, kod, vstup(), hotovo);
       else K.spustiPython(kod, vstup().split("\n").filter(function (x, i, a) { return x !== "" || i < a.length - 1; }), hotovo);
     }

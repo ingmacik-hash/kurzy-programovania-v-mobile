@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="utf-8"><title>Test interpretera Smalltalku</title></head>
+<body><pre id="vysledky">BEŽÍ</pre>
+<iframe id="app" src="../web/index.html" style="width:400px;height:300px"></iframe>
+<script>
+var spustene = false;
+var T = [
+  ["výpis", "Transcript showCr: 'Ahoj, svet!'.", "Ahoj, svet!"],
+  ["printNl a displayNl", "3 printNl. 'text' printNl. 'text' displayNl. #sym printNl. $a printNl.", "3\n'text'\ntext\n#sym\n$a"],
+  ["priorita správ", "(3 + 4 * 2) printNl. (3 + (4 * 2)) printNl. (2 raisedTo: 3 + 1) printNl. 10 factorial printNl.", "14\n11\n16\n3628800"],
+  ["veľké čísla a zlomky", "100 factorial printString size printNl. (7 / 2) printNl. (1/3 + 1/6) printNl. (7 / 2) asFloat printNl. (7 // 2) printNl. (7 \\\\ 2) printNl. (-7 \\\\ 2) printNl.", "158\n7/2\n2/9\n3.5\n3\n1\n1"],
+  ["desatinné", "0.1 printNl. 2.0 printNl. (2 / 4.0) printNl. 2 sqrt printNl. (3.14159 roundTo: 0.01) printNl. 3.7 rounded printNl.", "0.1\n2.0\n0.5\n1.4142135623730951\n3.14\n4"],
+  ["premenné", "| a b | a := 5. b := a * 2. (a + b) printNl.", "15"],
+  ["texty", "| s | s := 'Smalltalk'. s size printNl. s asUppercase displayNl. s reversed displayNl. (s copyFrom: 1 to: 5) displayNl. (s , '!') displayNl. (s includesSubstring: 'talk') printNl. (s occurrencesOf: $l) printNl.", "9\nSMALLTALK\nklatllamS\nSmall\nSmalltalk!\ntrue\n3"],
+  ["kaskáda", "Transcript show: 'A'; show: 'B'; cr; show: 'C'; cr.", "AB\nC"],
+  ["podmienky", "| x | x := 7. (x > 5) ifTrue: ['veľké' displayNl] ifFalse: ['malé' displayNl]. (x even ifTrue: ['párne'] ifFalse: ['nepárne']) displayNl. ((x > 0) and: [x < 10]) printNl.", "veľké\nnepárne\ntrue"],
+  ["cykly", "1 to: 3 do: [:i | Transcript show: i printString; show: ' ']. Transcript cr. 3 timesRepeat: [Transcript show: '*']. Transcript cr. | n | n := 1. [n < 100] whileTrue: [n := n * 2]. n printNl. 10 to: 1 by: -4 do: [:i | i printNl].", "1 2 3 \n***\n128\n10\n6\n2"],
+  ["bloky", "| f g | f := [:x | x * x]. (f value: 7) printNl. g := [:a :b | a + b]. (g value: 2 value: 3) printNl. [:x | x] numArgs printNl.", "49\n5\n1"],
+  ["kolekcie", "| c | c := #(5 3 8 1). (c collect: [:x | x * 2]) printNl. (c select: [:x | x > 2]) printNl. (c inject: 0 into: [:a :b | a + b]) printNl. (c detect: [:x | x > 6]) printNl. c asSortedCollection asArray printNl. (c includes: 3) printNl. c max printNl.", "#(10 6 16 2)\n#(5 3 8)\n17\n8\n#(1 3 5 8)\ntrue\n8"],
+  ["OrderedCollection", "| oc | oc := OrderedCollection new. oc add: 3; add: 1; add: 2. oc printNl. oc removeFirst printNl. oc size printNl. (oc collect: [:x | x * 10]) printNl.", "an OrderedCollection(3 1 2)\n3\n2\nan OrderedCollection(10 20)"],
+  ["Dictionary", "| d | d := Dictionary new. d at: #jablko put: 3; at: #hruska put: 5. (d at: #jablko) printNl. (d at: #slivka ifAbsent: [0]) printNl. (d includesKey: #hruska) printNl. d keys asSortedCollection asArray printNl. d keysAndValuesDo: [:k :v | Transcript showCr: k, ': ', v printString].", "3\n0\ntrue\n#(#hruska #jablko)\njablko: 3\nhruska: 5"],
+  ["triedy", "Object subclass: Zviera [\n  | meno |\n  Zviera class >> meno: m [ ^self new nastavMeno: m ]\n  nastavMeno: m [ meno := m ]\n  meno [ ^meno ]\n  zvuk [ ^'...' ]\n  ozvi [ ^meno, ': ', self zvuk ]\n]\nZviera subclass: Macka [\n  zvuk [ ^'Mňau' ]\n  ozvi [ ^super ozvi, '!' ]\n]\n(Macka meno: 'Micka') ozvi displayNl.\n(Zviera meno: 'Ryba') ozvi displayNl.\n(Macka new isKindOf: Zviera) printNl.", "Micka: Mňau!\nRyba: ...\ntrue"],
+  ["initialize a printOn:", "Object subclass: Pocitadlo [\n  | n |\n  initialize [ n := 0 ]\n  zvys [ n := n + 1 ]\n  printOn: aStream [ aStream nextPutAll: 'Počítadlo('; print: n; nextPutAll: ')' ]\n]\n| p | p := Pocitadlo new. p zvys; zvys. p printNl. p displayNl.", "Počítadlo(2)\nPočítadlo(2)"],
+  ["extend Integer", "Integer extend [ fib [ self < 2 ifTrue: [^self]. ^(self - 1) fib + (self - 2) fib ] ]\n20 fib printNl.", "6765"],
+  ["návrat z bloku", "Object subclass: H [ najdi: c [ c do: [:x | x > 3 ifTrue: [^x]]. ^nil ] ]\n(H new najdi: #(1 5 7)) printNl.", "5"],
+  ["výnimky", "| r | r := [10 / 0] on: ZeroDivide do: [:e | 'delenie nulou'].\nr displayNl.\nr := [Error signal: 'moja chyba'] on: Error do: [:e | e messageText].\nr displayNl.\n([#() first] on: Error do: [:e | -1]) printNl.", "delenie nulou\nmoja chyba\n-1"],
+  ["vstup", "| a b | a := stdin nextLine asNumber. b := stdin nextLine. (a * 2) printNl. b asUppercase displayNl. stdin nextLine printNl.", "42\nAHOJ\nnil", "21\nahoj"],
+  ["streamy", "| s | s := WriteStream on: String new. s nextPutAll: 'a'; print: 3; nextPut: $!. s contents displayNl. (String new: 3 withAll: $x) displayNl.", "a3!\nxxx"],
+  ["interval", "(1 to: 5) asArray printNl. ((1 to: 10) select: [:x | x isPrime]) printNl. ((1 to: 4) inject: 0 into: [:a :b | a + b]) printNl.", "#(1 2 3 4 5)\n#(2 3 5 7)\n10"],
+];
+var CHYBY = [
+  ["neznáma správa", "3 foo.", /nerozumie správe #foo/, 1],
+  ["nil", "| x | x foo.", /nil.*nerozumie|Premenná má hodnotu nil/, 1],
+  ["chýba bodka", "3 printNl\n4 printNl.", /Nechýba bodka/, 2],
+  ["neuzavretý text", "'ahoj printNl.", /nie je uzavretý apostrofom/, 1],
+  ["čiarka s číslom", "('Vek: ', 15) displayNl.", /printString/, 1],
+  ["delenie nulou", "(5 / 0) printNl.", /Delenie nulou/, 1],
+  ["nekonečný cyklus", "[true] whileTrue: [].", /nekonečný cyklus/, 1],
+  ["nekonečná rekurzia", "Object subclass: R [ r [ ^self r ] ]\nR new r.", /rekurzi|donekonečna|nekonečný/, 0],
+  ["neznáma premenná", "y printNl.", /neexistuje/, 1],
+  ["index mimo", "#(1 2) at: 5.", /Index 5 je mimo/, 1],
+];
+document.getElementById("app").onload = function () {
+  if (spustene) return; spustene = true;
+  var K = this.contentWindow.K, out = [], chyby = 0;
+  T.forEach(function (t) {
+    var r = K.spustiSmalltalkHned(t[1], t[3] || ""), v = r.vystup.replace(/\s+$/, "");
+    var ok = !r.chyba && v === t[2];
+    if (!ok) chyby++;
+    out.push((ok ? "OK: " : "CHYBA: ") + t[0] + (ok ? "" : "\n   čakám: " + JSON.stringify(t[2]) + "\n   dostal: " + JSON.stringify(v) + (r.chyba ? "\n   chyba: " + r.chyba.preklad + " (r. " + r.chyba.riadok + ")" : "")));
+  });
+  CHYBY.forEach(function (t) {
+    var t0 = Date.now(), r = K.spustiSmalltalkHned(t[1], ""), ok = r.chyba && t[2].test(r.chyba.preklad) && (!t[3] || r.chyba.riadok === t[3]);
+    if (!ok) chyby++;
+    out.push((ok ? "OK: " : "CHYBA: ") + "hláška " + t[0] + " → " + (r.chyba ? r.chyba.preklad + " (riadok " + r.chyba.riadok + ")" : "BEZ CHYBY, výstup " + JSON.stringify(r.vystup)) + " [" + (Date.now() - t0) + " ms]");
+  });
+  out.unshift(chyby ? "ZLYHALO: " + chyby : "VŠETKO OK");
+  document.getElementById("vysledky").textContent = out.join("\n");
+};
+</script></body></html>

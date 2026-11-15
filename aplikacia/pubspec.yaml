@@ -70,6 +70,12 @@ flutter:
     - assets/web/kurzy/python/
     - assets/web/kurzy/cpp/
     - assets/web/kurzy/sql/
+    - assets/web/kurzy/c/
+    - assets/web/kurzy/java/
+    - assets/web/kurzy/csharp/
+    - assets/web/kurzy/kotlin/
+    - assets/web/kurzy/php/
+    - assets/web/kurzy/smalltalk/
     - assets/web/lib/
 
   # To add assets to your application, add an assets section, like this:

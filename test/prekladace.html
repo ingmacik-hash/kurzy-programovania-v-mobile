@@ -19,6 +19,13 @@ document.getElementById("app").onload = async function () {
     kt: { dobry: 'fun main() {\n    val (a, b) = readln().split(" ").map { it.toInt() }\n    println("Súčet: ${a + b}")\n}', zly: 'fun main() {\n    val x: Int = "text"\n    println(x)\n}', zlyRiadok: 2,
       behu: 'fun main() {\n    val z = listOf(1, 2)\n    println(z[5])\n}', behuRiadok: 3 },
   };
+  /* PHP (Wandbox) */
+  var rp = await new Promise(function (ok) { K.spustiPhp('<?php\n\n[$a, $b] = explode(" ", trim(fgets(STDIN)));\necho "Súčet: " . ($a + $b) . "\\n";\necho $nema;\n', "3 4", ok); });
+  ok(!rp.chyba && P(rp.vystup) === "Súčet: 7" && /neexistuje/.test(rp.upozornenie || ""), "php beh, vstup, upozornenie: " + JSON.stringify(rp.vystup) + " / " + rp.upozornenie);
+  rp = await new Promise(function (ok) { K.spustiPhp('<?php\n\n$x = 5\necho $x;\n', "", ok); });
+  ok(rp.chyba && rp.chyba.riadok === 4 && /bodkočiarka/.test(rp.chyba.preklad), "php chyba prekladu → riadok " + (rp.chyba && rp.chyba.riadok) + ": " + (rp.chyba && rp.chyba.preklad));
+  rp = await new Promise(function (ok) { K.spustiPhp('<?php\n\necho intdiv(5, 0);\n', "", ok); });
+  ok(rp.chyba && rp.chyba.riadok === 3 && /nulou/.test(rp.chyba.preklad), "php chyba za behu → riadok " + (rp.chyba && rp.chyba.riadok) + ": " + (rp.chyba && rp.chyba.preklad));
   for (var j in T) {
     var r = await spusti(j, T[j].dobry, "3 4");
     ok(!r.chyba && P(r.vystup) === "Súčet: 7", j + " beh so vstupom a diakritikou (" + r.ms + " ms): " + JSON.stringify(r.vystup) + (r.chyba ? " / " + r.chyba.preklad : ""));

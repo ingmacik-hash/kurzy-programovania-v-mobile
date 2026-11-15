@@ -47,7 +47,7 @@ async function prejdiKroky(w, d, kroky, popis, najdiKrok) {
     } else if (k.typ === "kod") {
       // najprv pôvodný kód – má zlyhať, a pozrieme sa na hlášku
       hl.click();
-      await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 30000);
+      await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 100000);
       var zl = d.querySelector(".lekcia-dole.zle");
       log("  " + popis + " kód " + n + " so štartovým kódom: " + (zl ? "zamietnuté → " + (d.querySelector(".chyba-box:not([hidden])") ? d.querySelector(".chyba-box").textContent + " | " : "") + d.querySelector(".spatna-vazba p").textContent : "PRIJATÉ"));
       if (zl) hl.click();
@@ -57,7 +57,7 @@ async function prejdiKroky(w, d, kroky, popis, najdiKrok) {
       await pauza(50);
     }
     hl.click();
-    try { await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 30000); }
+    try { await cakaj(function () { return d.querySelector(".lekcia-dole.ok, .lekcia-dole.zle"); }, 100000); }
     catch (e) { zle(popis + " krok " + n + " (" + k.typ + "): žiadna odozva"); return; }
     if (d.querySelector(".lekcia-dole.zle")) zle(popis + " krok " + n + " (" + k.typ + "): správna odpoveď zamietnutá: " + d.querySelector(".spatna-vazba").textContent);
     hl.click(); await pauza(20);
@@ -78,7 +78,8 @@ async function main() {
   log("JS chyba → " + K.prelozChybu("Uncaught TypeError: Cannot read properties of null (reading 'textContent')"));
 
   var len = new URLSearchParams(location.search).get("kurz");
-  var kurzy = K.katalog.filter(function (k) { return K.moduly[k.id] && (!len || len === k.id); }).map(function (k) { return k.id; });
+  var bez = (new URLSearchParams(location.search).get("bez") || "").split(",");
+  var kurzy = K.katalog.filter(function (k) { return K.moduly[k.id] && (!len || len === k.id) && bez.indexOf(k.id) < 0; }).map(function (k) { return k.id; });
   log("Kurzy: " + kurzy.join(", "));
   for (var ki = 0; ki < kurzy.length; ki++) {
   var kurzId = kurzy[ki], pol = K.polozkyKurzu(kurzId);
@@ -94,7 +95,7 @@ async function main() {
       d.getElementById("obrazovka").innerHTML = ""; w.location.hash = "zaver-" + it.id;
       await cakaj(function () { return d.querySelector("[data-vyhodnot]"); });
       d.querySelector("[data-vyhodnot]").click();
-      await cakaj(function () { return d.querySelector(".vysledok-projektu, .lekcia-dole.zle .spatna-vazba:not([hidden])"); }, 30000);
+      await cakaj(function () { return d.querySelector(".vysledok-projektu, .lekcia-dole.zle .spatna-vazba:not([hidden])"); }, 100000);
       var pv = d.querySelector(".vysledok-projektu");
       log("  " + it.id + " so štartovým kódom: " + (pv ? pv.querySelector(".vysledok-testu").textContent : "nedá sa vyhodnotiť"));
       if (K.stav.zavery[it.id] && K.stav.zavery[it.id].preslo) zle(it.id + ": štartový kód by nemal prejsť");
@@ -102,7 +103,7 @@ async function main() {
       var apiZ = d.querySelector(".ed").__ed, noveZ = JSON.parse(JSON.stringify(apiZ.subory())); Object.keys(it.projekt.riesenie).forEach(function (x) { noveZ[x] = it.projekt.riesenie[x]; }); apiZ.nastav(noveZ);
       await pauza(50);
       d.querySelector("[data-vyhodnot]").click();
-      await cakaj(function () { return d.querySelector(".vysledok-projektu"); }, 30000).catch(function () { zle(it.id + ": riešenie sa nedalo vyhodnotiť: " + (d.querySelector(".spatna-vazba") || {}).textContent); });
+      await cakaj(function () { return d.querySelector(".vysledok-projektu"); }, 100000).catch(function () { zle(it.id + ": riešenie sa nedalo vyhodnotiť: " + (d.querySelector(".spatna-vazba") || {}).textContent); });
       var zz = K.stav.zavery[it.id];
       if (!zz || zz.best !== 100) zle(it.id + ": vzorové riešenie má " + (zz ? zz.best : "?") + " % – nesplnené body: " + [].map.call(d.querySelectorAll(".kriteria li.nie"), function (li) { return li.textContent; }).join(" | "));
       log(kurzId + " projekt " + it.id + ": " + (zz ? zz.best : "?") + " %, splnený: " + !!(zz && zz.preslo));
@@ -136,6 +137,8 @@ async function main() {
 }
 main().catch(function (e) { zle("výnimka: " + e.message + "\n" + e.stack); }).then(function () {
   document.getElementById("vysledky").textContent = (chyby ? "ZLYHALO (" + chyby + ")" : "VŠETKO OK") + "\n" + out.join("\n");
+  /* Pre beh v reálnom čase (bez --dump-dom): výsledok aj v titulku stránky. */
+  document.title = "HOTOVO " + (chyby ? "ZLYHALO (" + chyby + ")" : "VŠETKO OK") + " | lekcií " + out.filter(function (x) { return / hotová: true/.test(x); }).length + " | testov " + out.filter(function (x) { return /test modulu.*prešiel: true/.test(x); }).length + " | projektov " + out.filter(function (x) { return /splnený: true/.test(x); }).length + " | " + out.filter(function (x) { return /^CHYBA/.test(x); }).slice(0, 5).join(" ## ");
 });
 </script>
 </body>

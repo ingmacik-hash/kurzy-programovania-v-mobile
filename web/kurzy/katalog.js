@@ -69,3 +69,17 @@ K.registrujKurz({
   pouzitie: ["aplikácie pre Android", "servery", "multiplatformové aplikácie", "skripty"],
   plan: ["Modul 1 · Prvý program", "Modul 2 · Typy a vstup", "Modul 3 · Podmienky a cykly", "Modul 4 · Funkcie a kolekcie", "Modul 5 · Triedy a null", "Záverečné projekty"],
 });
+K.registrujKurz({
+  id: "php", nazov: "PHP", skratka: "php", farba: "#777bb3", naFarbe: "#ffffff",
+  podtitul: "Serverová strana webu",
+  popis: "Jazyk, ktorý beží na webových serveroch. Poháňa WordPress, Wikipédiu a množstvo e-shopov. Spracuje formuláre, pracuje s údajmi a posiela prehliadaču hotové stránky.",
+  pouzitie: ["webové stránky", "e-shopy", "WordPress", "API pre aplikácie"],
+  plan: ["Modul 1 · Prvý skript", "Modul 2 · Typy, vstup a text", "Modul 3 · Podmienky a cykly", "Modul 4 · Funkcie a polia", "Modul 5 · Objekty a bezpečný web", "Záverečné projekty"],
+});
+K.registrujKurz({
+  id: "smalltalk", nazov: "Smalltalk", skratka: "st", farba: "#2e7d6b", naFarbe: "#ffffff",
+  podtitul: "Kde sa zrodili objekty",
+  popis: "Legendárny jazyk z laboratória Xerox PARC, v ktorom je úplne všetko objekt. Naučí ťa čisté objektové myslenie, ktoré dnes používajú Java, Python aj Swift. Beží priamo v telefóne, aj bez internetu.",
+  pouzitie: ["objektové myslenie", "výučba programovania", "Pharo a Squeak", "prototypy"],
+  plan: ["Modul 1 · Objekty a správy", "Modul 2 · Čísla, texty a vstup", "Modul 3 · Bloky, podmienky a cykly", "Modul 4 · Kolekcie", "Modul 5 · Triedy a objekty", "Záverečné projekty"],
+});

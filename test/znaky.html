@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8"><title>znaky</title>
+<!-- Spočíta ASCII symboly v riešeniach úloh každého kurzu (na kontrolu lišty so znakmi v editore). -->
+<iframe id="app" src="../web/index.html" style="width:412px;height:900px"></iframe><pre id="v"></pre>
+<script>
+document.getElementById("app").onload = function () {
+  var K = this.contentWindow.K, out = [];
+  function zber(o, acc, hlb) {
+    if (!o || hlb > 8) return;
+    if (Array.isArray(o)) { o.forEach(function (x) { zber(x, acc, hlb + 1); }); return; }
+    if (typeof o !== "object") return;
+    Object.keys(o).forEach(function (k) {
+      var v = o[k];
+      if ((k === "riesenie" || k === "subory" || k === "zaciatok") && v && typeof v === "object") Object.keys(v).forEach(function (x) { if (typeof v[x] === "string") acc.push(v[x]); });
+      else if (typeof v === "object") zber(v, acc, hlb + 1);
+    });
+  }
+  K.katalog.forEach(function (k) {
+    if (!K.moduly[k.id]) return;
+    var acc = []; zber(K.polozkyKurzu(k.id).map(function (p) { return p.lekcia || p.projekt || p.modul.test; }), acc, 0);
+    var c = {}; acc.join("").replace(/[!-\/:-@\[-`{-~]/g, function (z) { c[z] = (c[z] || 0) + 1; });
+    out.push(k.id + " (" + acc.length + "): " + Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).map(function (z) { return z + c[z]; }).join(" "));
+  });
+  document.getElementById("v").textContent = out.join("\n");
+  document.title = "HOTOVO";
+};
+</script>

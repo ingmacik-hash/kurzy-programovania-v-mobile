@@ -52,9 +52,16 @@ class _SyntaxObrazovkaState extends State<SyntaxObrazovka> {
       ..setBackgroundColor(tmava ? const Color(0xFF0C0F17) : const Color(0xFFF3F4F8))
       ..setNavigationDelegate(NavigationDelegate(onPageFinished: (_) => _skryUvod()))
       ..addJavaScriptChannel('SyntaxSiet', onMessageReceived: (m) => _siet(m.message))
+      ..addJavaScriptChannel('SyntaxLicencie', onMessageReceived: (_) => _licencie())
       ..loadFlutterAsset('assets/web/index.html');
     // Poistka: úvodná obrazovka zmizne najneskôr po 8 sekundách.
     Future.delayed(const Duration(seconds: 8), _skryUvod);
+  }
+
+  // Zoznam licencií všetkých súčastí Flutteru a balíkov (Flutter ho zostaví sám).
+  void _licencie() {
+    if (!mounted) return;
+    showLicensePage(context: context, applicationName: 'SyntaxCode');
   }
 
   var _uvodSkryty = false;

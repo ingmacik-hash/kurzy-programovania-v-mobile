@@ -327,5 +327,70 @@ body.bez-menu #spodna{display:none}
 .licencia summary::-webkit-details-marker{display:none}
 .licencia summary small{font-size:13px}
 .licencia pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 var(--f-code);background:var(--surface-2);padding:10px;border-radius:10px;margin:0;max-height:320px;overflow:auto}
+.sukromie h2{font-size:17px;margin:18px 0 6px}
+.sukromie p,.sukromie ul{margin:0 0 8px}
+.sukromie ul{padding-left:20px}
 /* iOS: bez automatického zväčšovania písma pri otočení a bez zvýraznenia ťuknutia */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* ---------- úvod, dotazník a osobný plán ---------- */
+.uv{min-height:100%;gap:14px}
+.uv-hore{display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);padding-block:4px;z-index:2}
+.uv-bodky{flex:1;display:flex;justify-content:center;gap:6px}
+.uv-bodky i{width:8px;height:8px;border-radius:99px;background:var(--line);transition:width .25s,background .25s}
+.uv-bodky i.za{background:var(--accent-soft)}
+.uv-bodky i.on{width:22px;background:var(--accent)}
+.uv-pruh{flex:1}
+.uv-preskocit{border:0;background:none;color:var(--muted);font:600 14px var(--f-text);padding:10px 4px;min-width:42px}
+.uv-telo{display:flex;flex-direction:column;gap:12px;flex:1}
+.uv-telo h1{font-size:28px}
+.uv-telo p{margin:0}
+.uv-telo code{font:13.5px var(--f-code);font-variant-ligatures:none;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.uv-dole{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding-top:18px;padding-bottom:max(4px,env(safe-area-inset-bottom,0px))}
+.uv-obr{display:flex;justify-content:center;padding:6px 0 4px}
+.uv-logo{font-family:var(--f-display);font-size:40px;font-weight:700;letter-spacing:-.02em;padding:18px 0}
+.uv-logo b{color:var(--accent)}
+.uv-body{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.uv-strom{display:flex;flex-direction:column;gap:6px;width:100%}
+.uv-uroven{display:flex;flex-direction:column;gap:1px;border-left:5px solid var(--f);background:var(--surface);border-radius:10px;padding:9px 12px;box-shadow:var(--shadow)}
+.uv-uroven:nth-child(2){margin-left:16px}.uv-uroven:nth-child(3){margin-left:32px}.uv-uroven:nth-child(4){margin-left:48px}
+.uv-uroven span{color:var(--muted);font-size:13.5px}
+.uv-typy{display:flex;flex-direction:column;gap:12px}
+.uv-typy>div{display:flex;gap:12px;align-items:flex-start}
+.uv-typy p b{display:block}
+.uv-ik{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);background:color-mix(in srgb,var(--f) 15%,transparent);color:var(--f)}
+.uv-ik svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.uv-logo .uv-ik{width:84px;height:84px;border-radius:24px}.uv-logo .uv-ik svg{width:46px;height:46px}
+.uv-kroky{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
+.uv-tab{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--surface);border-radius:12px;overflow:hidden}
+.uv-tab td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.uv-tab tr:last-child td{border-bottom:0}
+.uv-tab td:last-child{text-align:right;color:var(--accent);width:42%}
+.uv-krabice{display:flex;gap:6px;width:100%}
+.uv-krabice div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px;border-radius:10px;background:var(--accent-soft);background:color-mix(in srgb,var(--accent) calc(10% + var(--i) * 12%),var(--surface))}
+.uv-krabice b{font:700 18px var(--f-display)}
+.uv-krabice span{font-size:11.5px;color:var(--muted);text-align:center}
+.uv-ukazka{width:100%;max-width:340px;pointer-events:none}
+.volby{display:flex;flex-direction:column;gap:9px}
+.volba-uv{display:flex;align-items:center;gap:12px;text-align:left;width:100%;border:2px solid var(--line);background:var(--surface);color:var(--text);border-radius:14px;padding:13px 14px;font:15.5px var(--f-text);min-height:56px}
+.volba-uv b{display:block;font-weight:600}
+.volba-uv small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px}
+.volba-uv .znacka{flex:0 0 auto;width:22px;height:22px;border-radius:99px;border:2px solid var(--line)}
+.volby.multi .znacka{border-radius:6px}
+.volba-uv.on{border-color:var(--accent);background:var(--accent-soft)}
+.volba-uv.on .znacka{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px var(--accent-soft)}
+.plan-suhrn{display:flex;flex-direction:column;gap:12px}
+.plan-cisla{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.plan-cisla div{display:flex;flex-direction:column;gap:1px;background:var(--surface-2);border-radius:10px;padding:9px 6px;text-align:center}
+.plan-cisla b{font:700 16px var(--f-display);font-variant-numeric:tabular-nums}
+.plan-cisla span{font-size:11.5px;color:var(--muted);font-weight:600}
+.plan-odpor{display:flex;flex-direction:column;gap:10px}
+.plan-os{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.plan-os li{display:flex;gap:10px;align-items:flex-start}
+.plan-c{flex:0 0 auto;width:32px;height:32px;margin-top:10px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;background:var(--surface-2);color:var(--muted)}
+.plan-c svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.5}
+.plan-os li.teraz .plan-c{background:var(--farba);color:#fff}
+.plan-os li.hotovo .plan-c{background:var(--ok);color:#fff}
+.plan-kurz{flex:1;min-width:0;text-decoration:none;color:var(--text);border-left:5px solid var(--farba)}
+.plan-os li.teraz .plan-kurz{box-shadow:var(--shadow);border-color:var(--farba)}
+@media (max-width:380px){.plan-cisla{grid-template-columns:repeat(2,minmax(0,1fr))}}

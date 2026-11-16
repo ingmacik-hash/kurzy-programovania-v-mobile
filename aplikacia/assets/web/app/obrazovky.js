@@ -18,6 +18,7 @@
       "<div><span class=\"stitok\">Denný cieľ</span><h2>" + (pct >= 1 ? "Splnené, výborne!" : min ? "Ešte " + (ciel - min) + " min a máš to" : "Dnes " + ciel + " minút kódu") + "</h2>" +
       '<p class="tlmene" style="margin:2px 0 0;font-size:14px">' + (seria ? "Séria: " + seria + " " + dni(seria) + " za sebou." : "Začni sériu dní ešte dnes.") + "</p></div></div>";
 
+    h += K.kartaPlanu();
     var posl = posledny();
     if (posl) {
       var k = K.kurz(posl.kurz), d = K.dalsiaPolozka(posl.kurz), pk = K.pokrokKurzu(posl.kurz);
@@ -154,17 +155,18 @@
     var s = K.stav, hotove = Object.keys(s.hotove).length, seria = K.aktualnaSeria();
     var h = '<div class="obal"><div><span class="stitok">Profil</span><h1 style="font-size:28px">Tvoj pokrok</h1></div>' +
       '<div class="statistiky"><div><b>' + s.xp + "</b><small>XP spolu</small></div><div><b>" + seria + "</b><small>séria dní</small></div><div><b>" + hotove + "</b><small>lekcií</small></div></div>" +
+      K.kartaPlanu() + '<a class="karta riadok" href="#uvod" style="text-decoration:none;color:var(--text)"><span class="ikona-btn" style="background:var(--surface-2)">' + K.ikona.hladat + '</span><div class="medzera"><b>Ako funguje SyntaxCode</b><div class="tlmene" style="font-size:14px">Kurzy, body XP, séria, opakovanie</div></div><span class="tlmene">›</span></a>' +
       '<div class="karta graf"><div class="riadok" style="margin-bottom:8px"><b>Posledných 7 dní</b><span class="medzera"></span><span class="tlmene" style="font-size:13px">XP za deň</span></div>' + graf() + "</div>" +
       '<div><h2 style="font-size:20px;margin-bottom:10px">Odznaky</h2><div class="odznaky">' + K.ODZNAKY.map(function (o) {
         var ma = !!s.odznaky[o.id];
         return '<div class="odznak' + (ma ? " ma" : "") + '"><span class="m">' + K.ikona[o.ikona] + "</span>" + esc(o.nazov) + "</div>";
       }).join("") + "</div></div>" +
       '<div class="karta" style="padding-block:4px"><div class="nastavenie"><label for="n-tema">Vzhľad</label><select id="n-tema"><option value="system">Podľa telefónu</option><option value="light">Svetlý</option><option value="dark">Tmavý</option></select></div>' +
-      '<div class="nastavenie"><label for="n-ciel">Denný cieľ</label><select id="n-ciel"><option value="5">5 minút</option><option value="10">10 minút</option><option value="15">15 minút</option><option value="20">20 minút</option><option value="30">30 minút</option></select></div>' +
+      '<div class="nastavenie"><label for="n-ciel">Denný cieľ</label><select id="n-ciel"><option value="5">5 minút</option><option value="10">10 minút</option><option value="15">15 minút</option><option value="20">20 minút</option><option value="30">30 minút</option><option value="45">45 minút</option><option value="60">60 minút</option></select></div>' +
       '<div class="nastavenie"><label for="n-uroven">Vysvetlenia</label><select id="n-uroven"><option value="0">Stručne</option><option value="1">Podrobne</option><option value="2">Do hĺbky</option></select></div>' +
       '<div class="nastavenie"><label>Vymazať celý pokrok</label><button type="button" class="btn sek" data-vymaz style="min-height:38px;padding:6px 12px">Vymazať</button></div></div>' +
       '<div class="potvrd" hidden><b>Naozaj vymazať všetok pokrok?</b><span>Zmažú sa XP, lekcie, testy, séria aj projekty. Toto sa nedá vrátiť.</span><div class="riadok"><button type="button" class="btn sek" data-nie style="flex:1">Nechať</button><button type="button" class="btn zle" data-ano style="flex:1">Vymazať</button></div></div>' +
-      '<p class="tlmene" style="font-size:12.5px;text-align:center;margin:0">SyntaxCode · pokrok sa ukladá len v tomto telefóne · <a href="#licencie">Licencie a autori</a></p></div>';
+      '<p class="tlmene" style="font-size:12.5px;text-align:center;margin:0">SyntaxCode · pokrok sa ukladá len v tomto telefóne · <a href="#licencie">Licencie a autori</a> · <a href="#sukromie">Ochrana súkromia</a></p></div>';
     var el = K.el(h);
     var t = el.querySelector("#n-tema"), c = el.querySelector("#n-ciel"), u = el.querySelector("#n-uroven");
     t.value = s.nast.tema; c.value = String(s.nast.ciel); u.value = String(s.nast.uroven);
@@ -177,6 +179,16 @@
     el.querySelector("[data-ano]").onclick = function () { K.vymaz(); K.vykresli(); K.toast("Pokrok vymazaný"); };
     return el;
   };
+  /* ---------- zásady ochrany súkromia ---------- */
+  K.obrazovky.sukromie = function () {
+    var el = K.el('<div class="obal"><div class="riadok"><button type="button" class="ikona-btn" data-spat aria-label="Späť">' + K.ikona.spat + '</button><div><span class="stitok">SyntaxCode</span><h1 style="font-size:26px">' + esc(K.SUKROMIE.nazov) + '</h1></div></div>' +
+      '<div class="karta sukromie">' + K.sukromieHtml() + "</div></div>");
+    el.querySelector("[data-spat]").onclick = function () { K.ist("profil", true); };
+    K._spatHandler = function () { K.ist("profil", true); };
+    K._upratat = function () { K._spatHandler = null; };
+    return el;
+  };
+
   /* ---------- licencie a autori ---------- */
   K.obrazovky.licencie = function () {
     var h = '<div class="obal"><div class="riadok"><button type="button" class="ikona-btn" data-spat aria-label="Späť">' + K.ikona.spat + '</button><div><span class="stitok">SyntaxCode</span><h1 style="font-size:26px">Licencie a autori</h1></div></div>' +
@@ -185,8 +197,10 @@
       '<p class="tlmene" style="margin:0;font-size:14px">Programy v C, C++, Jave a C# sa prekladajú na internete cez bezplatné služby <b>Compiler Explorer</b> (godbolt.org) a <b>Wandbox</b> (wandbox.org), PHP cez Wandbox a programy v Kotline cez <b>Kotlin Playground</b> od JetBrains (api.kotlinlang.org). Posiela sa im len kód úlohy a vstup, žiadne osobné údaje. Python (Brython), SQL (sql.js) a Smalltalk (vlastný interpreter SyntaxCode) bežia priamo v telefóne.</p></div>' +
       (K.LICENCIE || []).map(function (l, i) {
         return '<details class="karta licencia"><summary><b>' + esc(l.nazov) + '</b><small class="tlmene">' + esc(l.popis) + " · " + esc(l.licencia) + '</small></summary><p class="tlmene" style="font-size:13px;margin:8px 0">' + esc(l.url) + '</p><pre>' + esc(l.text) + "</pre></details>";
-      }).join("") + "</div>";
+      }).join("") +
+      (window.SyntaxLicencie ? '<button type="button" class="btn sek" data-flutter-licencie>Ďalšie licencie súčastí Flutteru</button>' : "") + "</div>";
     var el = K.el(h);
+    var fl = el.querySelector("[data-flutter-licencie]"); if (fl) fl.onclick = function () { window.SyntaxLicencie.postMessage("ukaz"); };
     el.querySelector("[data-spat]").onclick = function () { K.ist("profil", true); };
     K._spatHandler = function () { K.ist("profil", true); };
     K._upratat = function () { K._spatHandler = null; };

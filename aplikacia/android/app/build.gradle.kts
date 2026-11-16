@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val podpis = Properties().apply {
+    val f = rootProject.file("key.properties")
+    // SYNTAX_LADIACI_PODPIS=1 → skúšobná verzia do telefónu podpísaná ladiacim kľúčom (dá sa nainštalovať cez staršiu bez straty pokroku).
+    if (f.exists() && System.getenv("SYNTAX_LADIACI_PODPIS") == null) f.inputStream().use { load(it) }
 }
 
 android {
@@ -29,11 +37,22 @@ android {
         versionName = flutter.versionName
     }
 
+    // Podpis vydania: údaje sú v android/key.properties (nie je v gite, kľúč je mimo projektu).
+    // Bez key.properties sa vydanie podpíše ladiacim kľúčom (napr. na GitHub Actions).
+    signingConfigs {
+        create("release") {
+            if (podpis.isNotEmpty()) {
+                keyAlias = podpis.getProperty("keyAlias")
+                keyPassword = podpis.getProperty("keyPassword")
+                storeFile = file(podpis.getProperty("storeFile"))
+                storePassword = podpis.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (podpis.isNotEmpty()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
 }

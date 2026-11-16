@@ -1,6 +1,8 @@
-/* Python · Modul 1 · Prvé príkazy */
+/* Python · Modul 1 · Prvé príkazy
+   Vysvetlenia v troch vrstvách: text (Stručne) je zrozumiteľný úplnému začiatočníkovi,
+   podrobne pridáva prirovnania, príklady a časté chyby, hlbka ukazuje, ako to funguje vo vnútri. */
 (function () {
-  var P = K.pom, PY = function (t) { return P.kod(t, "py"); }, TXT = P.TXT, MONO = P.MONO;
+  var P = K.pom, PY = function (t) { return P.kod(t, "py"); }, TXT = P.TXT;
   var UKAZ = function (kod, vystup) { return '<div class="kod-obal">' + P.kod(kod, "py", "Kód") + '<pre class="kod vystup-ukazka">' + K.esc(vystup) + "</pre></div>"; };
   function r(v) { return P.riadky(v); }
 
@@ -10,89 +12,168 @@
       return '<circle cx="' + cx + '" cy="44" r="28" style="fill:var(--surface-2);stroke:#3572a5;stroke-width:2"/><text x="' + cx + '" y="53" text-anchor="middle" font-size="24">' + x[0] + '</text><text x="' + cx + '" y="94" text-anchor="middle" font-size="10" ' + TXT + ' style="fill:var(--text)">' + x[1].split(" ")[0] + '</text><text x="' + cx + '" y="107" text-anchor="middle" font-size="10" ' + TXT + ' style="fill:var(--text)">' + (x[1].split(" ")[1] || "") + "</text>";
     }).join("") + "</svg>";
 
-  var L1 = { id: "python-1-1", nazov: "Čo je Python", minut: 7, kroky: [
-    { typ: "vyklad", nadpis: "Jazyk, ktorý sa číta ako angličtina",
-      text: "<p><b>Python</b> je jeden z najpopulárnejších programovacích jazykov na svete. Má jednoduchý zápis, preto sa často učí ako prvý jazyk. Zároveň ho používajú NASA, Google, Netflix aj vedci.</p>", obr: OBR_POUZITIE,
-      podrobne: "<p>Kedy je Python dobrá voľba:</p><ul><li><b>umelá inteligencia</b> a strojové učenie (ChatGPT a podobné modely sa trénujú v Pythone),</li><li>spracovanie <b>dát</b>, tabuliek a grafov,</li><li><b>automatizácia</b> nudnej práce: premenovanie súborov, posielanie e-mailov, sťahovanie údajov,</li><li>serverová časť webov (Django, Flask).</li></ul><p>Na hry s rýchlou grafikou či mobilné aplikácie sú vhodnejšie iné jazyky (C++, C#, Kotlin, Swift).</p>",
-      hlbka: "<p>Python vytvoril Holanďan Guido van Rossum v roku 1991. Meno nemá podľa hada, ale podľa britskej komediálnej skupiny Monty Python. Python je <b>interpretovaný</b>: program sa neprekladá dopredu, ale vykonáva riadok po riadku. Je preto pomalší ako C++, no na väčšinu úloh to nevadí.</p>" },
-    { typ: "vyklad", nadpis: "Prvý program",
-      text: "<p>Príkaz <code>print()</code> vypíše na obrazovku, čo mu dáš do zátvoriek:</p>" + UKAZ('print("Ahoj, svet!")\nprint(2 + 3)', "Ahoj, svet!\n5"),
-      podrobne: "<ul><li>Text je v úvodzovkách, jednoduchých alebo dvojitých.</li><li>Čísla a výpočty bez úvodzoviek.</li><li>Na konci riadku <b>nie je</b> bodkočiarka. Každý príkaz je na svojom riadku.</li></ul><p>Python v tejto aplikácii beží priamo v tvojom telefóne, aj bez internetu. Prvé spustenie trvá pár sekúnd.</p>" },
-    { typ: "volba", otazka: "Čo vypíše <code>print(10 - 4)</code>?", moznosti: ["6", "10 - 4", "\"6\"", "chybu"], spravna: 0, vysvetlenie: "Bez úvodzoviek Python vypočíta výsledok." },
-    { typ: "volba", otazka: "Na čo je Python obzvlášť obľúbený?", moznosti: ["Umelá inteligencia a dáta", "Ovládače grafických kariet", "Štýlovanie webov", "Nič, je to starý jazyk"], spravna: 0, vysvetlenie: "AI, dáta a automatizácia sú hlavná doména Pythonu." },
-    { typ: "kod", zadanie: "Vypíš dva riadky: <b>Učím sa Python</b> a pod ním výsledok <code>12 * 12</code>. Program spusti tlačidlom ▶ alebo rovno ťukni na Skontrolovať.",
+  /* Program ako recept: kroky idú presne v poradí, v akom sú napísané. */
+  var OBR_RECEPT = '<svg viewBox="0 0 340 128" role="img" aria-label="Program je ako recept: zoznam krokov, ktoré počítač vykoná presne v poradí, v akom sú napísané">' +
+    [["1", "print(\"Ahoj\")"], ["2", "print(2 + 3)"], ["3", "print(\"Koniec\")"]].map(function (x, i) {
+      var y = 8 + i * 40;
+      return '<rect x="8" y="' + y + '" width="196" height="32" rx="8" style="fill:var(--surface-2);stroke:#3572a5;stroke-width:1.5"/><circle cx="26" cy="' + (y + 16) + '" r="10" style="fill:#3572a5"/><text x="26" y="' + (y + 20.5) + '" text-anchor="middle" font-size="12" font-weight="700" ' + TXT + ' style="fill:#fff">' + x[0] + '</text><text x="44" y="' + (y + 20.5) + '" font-size="12.5" font-family="JBMono,monospace" style="fill:var(--text)">' + K.esc(x[1]) + "</text>";
+    }).join("") +
+    '<path d="M212 64h28" style="stroke:var(--muted);stroke-width:2"/><path d="M236 59l7 5-7 5" style="fill:var(--muted)"/>' +
+    '<rect x="250" y="20" width="82" height="88" rx="10" style="fill:#121729"/><text x="260" y="48" font-size="12.5" font-family="JBMono,monospace" style="fill:#e4e8f5">Ahoj</text><text x="260" y="68" font-size="12.5" font-family="JBMono,monospace" style="fill:#e4e8f5">5</text><text x="260" y="88" font-size="12.5" font-family="JBMono,monospace" style="fill:#e4e8f5">Koniec</text>' +
+    '<text x="291" y="124" text-anchor="middle" font-size="10.5" ' + TXT + ' style="fill:var(--muted)">výstup</text></svg>';
+
+  /* ====================== Lekcia 1 ====================== */
+  var L1 = { id: "python-1-1", nazov: "Čo je program a Python", minut: 9, kroky: [
+    { typ: "vyklad", nadpis: "Čo je program",
+      text: "<p><b>Program</b> je zoznam presných pokynov pre počítač. Počítač ich vykonáva jeden po druhom, zhora nadol, presne v poradí, v akom sú napísané.</p><p>Pokyny píšeme v <b>programovacom jazyku</b>. Je to dohodnutý spôsob zápisu, ktorému rozumie človek aj počítač. Jeden z nich je <b>Python</b> a ten sa teraz naučíš.</p>", obr: OBR_RECEPT,
+      podrobne: "<p>Program si môžeš predstaviť ako <b>recept</b>. Recept má presné kroky: „nalej vodu, zapni varič, počkaj, kým voda zovrie“. Keď kroky prehodíš, čaj nebude. Rovnako je to s programom.</p><p>Je tu však jeden veľký rozdiel: kuchár si domyslí, čo si myslel, aj keď to nenapíšeš presne. <b>Počítač si nedomýšľa nič.</b> Urobí presne to, čo je napísané, aj keď je to nezmysel. Preto pri programovaní záleží na každom znaku: na úvodzovke, zátvorke aj veľkom písmene.</p><p>Neboj sa, že je to priveľa pravidiel. Budeš ich spoznávať postupne a aplikácia ťa na každú chybu upozorní.</p>",
+      hlbka: "<p>Procesor v telefóne v skutočnosti rozumie iba <b>strojovému kódu</b>, teda dlhým postupnostiam jednotiek a núl. Písať priamo v ňom by bolo veľmi pomalé a náročné.</p><p>Preto vznikli programovacie jazyky, ktoré sa podobajú ľudskej reči. Program v Pythone číta iný program, <b>interpreter</b>. Ten pokyny prekladá na činnosti procesora, a to priebežne, riadok po riadku. Jazyky ako C alebo C++ sa naopak celé preložia dopredu prekladačom (kompilátorom) a až potom sa spustia.</p>" },
+    { typ: "vyklad", nadpis: "Prečo práve Python",
+      text: "<p><b>Python</b> je jeden z najpopulárnejších programovacích jazykov na svete. Zápis je krátky a podobá sa angličtine, preto sa často učí ako prvý jazyk. Zároveň ho používajú profesionáli v Google, NASA, Netflixe aj vedci.</p>", obr: OBR_POUZITIE,
+      podrobne: "<p>Na čo sa Python používa najčastejšie:</p><ul><li><b>umelá inteligencia</b> a strojové učenie (aj modely ako ChatGPT sa trénujú pomocou Pythonu),</li><li>spracovanie <b>dát</b>: tabuľky, štatistiky, grafy,</li><li><b>automatizácia</b> nudnej práce: premenovanie stoviek súborov, posielanie e-mailov, sťahovanie údajov z webu,</li><li>serverová časť webových stránok,</li><li><b>veda a výskum</b>: výpočty, simulácie, spracovanie meraní.</li></ul><p>Na hry s rýchlou 3D grafikou alebo na mobilné aplikácie sa viac hodia iné jazyky, napríklad C++, C# alebo Kotlin. To, čo sa naučíš v Pythone (premenné, podmienky, cykly), však využiješ v každom z nich.</p>",
+      hlbka: "<p>Python vytvoril Holanďan <b>Guido van Rossum</b> a prvá verzia vyšla v roku 1991. Meno nemá podľa hada, ale podľa britskej komediálnej skupiny Monty Python.</p><p>Python je <b>interpretovaný</b> jazyk: program sa nepreloží celý dopredu, ale vykonáva sa priebežne. Preto je pomalší ako C++, no pri väčšine bežných úloh to nevadí, lebo čas programátora je drahší ako čas počítača. Tam, kde treba rýchlosť (napríklad výpočty pri umelej inteligencii), Python volá knižnice napísané v C.</p><p>V tejto aplikácii beží Python priamo v telefóne vďaka projektu Brython, ktorý Python prekladá do JavaScriptu.</p>" },
+    { typ: "volba", otazka: "Čo platí o programe?", moznosti: ["Počítač vykoná presne to, čo je napísané, v danom poradí", "Počítač si domyslí, čo som chcel napísať", "Na poradí príkazov nezáleží", "Program funguje aj s preklepmi"], spravna: 0,
+      vysvetlenie: "Presne tak. Počítač si nič nedomýšľa a vykoná príkazy zhora nadol. Preto záleží na každom znaku aj na poradí." },
+    { typ: "vyklad", nadpis: "Prvý program: print",
+      text: "<p>Príkaz <code>print</code> vypíše na obrazovku to, čo mu dáš do zátvoriek. Tomu, čo program vypíše, hovoríme <b>výstup</b>.</p>" + UKAZ('print("Ahoj, svet!")\nprint(2 + 3)', "Ahoj, svet!\n5") +
+        "<p><b>Text</b> píšeš v úvodzovkách. <b>Čísla a výpočty</b> píšeš bez úvodzoviek a Python ich vypočíta.</p>",
+      podrobne: "<p>Pozrime sa na prvý riadok po kúskoch:</p>" + P.tabulka(["Časť", "Čo znamená"], [["<code>print</code>", "meno príkazu, z angličtiny „vytlač“"], ["<code>( )</code>", "zátvorky: do nich patrí to, čo má print vypísať"], ["<code>\" \"</code>", "úvodzovky: medzi nimi je text, ktorý sa vypíše presne tak, ako je"]]) +
+        "<p>Rozdiel medzi textom a výpočtom je dôležitý:</p>" + UKAZ('print("2 + 3")\nprint(2 + 3)', "2 + 3\n5") +
+        "<p>Prvý riadok má úvodzovky, je to teda text a vypíše sa doslova. Druhý riadok úvodzovky nemá, preto ho Python vypočíta.</p><p><b>Časté chyby začiatočníkov:</b></p><ul><li>chýba úvodzovka na konci textu: <code>print(\"Ahoj)</code>,</li><li>chýba zatváracia zátvorka: <code>print(\"Ahoj\"</code>,</li><li>veľké písmeno: <code>Print(\"Ahoj\")</code>. Python rozlišuje veľké a malé písmená a pozná len <code>print</code>.</li></ul><p>Na konci riadku sa v Pythone <b>nepíše</b> bodkočiarka. Každý príkaz je na samostatnom riadku.</p>",
+      hlbka: "<p><code>print</code> je v skutočnosti <b>funkcia</b>, teda pomenovaný kus programu, ktorý niečo vykoná. Hodnoty v zátvorkách sú jej <b>argumenty</b>. Funkcie budeš neskôr vytvárať aj sám.</p><p>Výstup ide do takzvaného <b>štandardného výstupu</b> (stdout). V tejto aplikácii je to čierne okno pod editorom, na počítači okno terminálu. Za každým výpisom print automaticky pridá neviditeľný znak <b>nového riadku</b>, preto je každý výpis na samostatnom riadku.</p><p>Úvodzovky môžu byť dvojité <code>\"Ahoj\"</code> aj jednoduché <code>'Ahoj'</code>. Pre Python je to to isté, len musia byť na oboch stranách textu rovnaké.</p>" },
+    { typ: "volba", otazka: "Čo vypíše <code>print(10 - 4)</code>?", moznosti: ["6", "10 - 4", "\"6\"", "chybu"], spravna: 0,
+      vysvetlenie: "Čísla nie sú v úvodzovkách, preto Python výraz vypočíta: 10 − 4 = 6. Úvodzovky sa pri výpise nikdy nezobrazujú." },
+    { typ: "volba", otazka: "Čo vypíše <code>print(\"10 - 4\")</code>?", moznosti: ["10 - 4", "6", "\"10 - 4\"", "chybu"], spravna: 0,
+      vysvetlenie: "Teraz je všetko v úvodzovkách, je to teda text a vypíše sa doslova. Samotné úvodzovky sa nevypíšu, len ohraničujú text." },
+    { typ: "kod", zadanie: "Napíš svoj prvý program. Vypíš dva riadky: <b>Učím sa Python</b> a pod ním výsledok výpočtu <code>12 * 12</code>. (Hviezdička <code>*</code> znamená krát.) Program spusti tlačidlom ▶ alebo rovno ťukni na Skontrolovať.",
       karty: ["py"], start: { py: "" }, vyska: "140px",
-      napoveda: 'print("Učím sa Python") a print(12 * 12)', riesenie: { py: 'print("Učím sa Python")\nprint(12 * 12)' },
-      kontrola: function (v) { var l = r(v); if (l[0] !== "Učím sa Python") return "Prvý riadok má byť presne: Učím sa Python"; return l[1] === "144" ? null : "Druhý riadok má byť 144 (12 * 12 bez úvodzoviek)."; },
-      vysvetlenie: "Prvý program v Pythone je hotový!" },
+      napoveda: 'Potrebuješ dva riadky. Prvý: print("Učím sa Python"). Druhý: print(12 * 12), bez úvodzoviek, aby Python počítal.', riesenie: { py: 'print("Učím sa Python")\nprint(12 * 12)' },
+      kontrola: function (v) { var l = r(v); if (l[0] !== "Učím sa Python") return "Prvý riadok má byť presne: Učím sa Python. Skontroluj veľké U a úvodzovky na oboch stranách."; return l[1] === "144" ? null : "Druhý riadok má byť 144. Napíš 12 * 12 bez úvodzoviek, aby Python počítal."; },
+      vysvetlenie: "Tvoj prvý program v Pythone je hotový! Všimni si, že každý print vypísal svoj vlastný riadok." },
   ] };
 
-  var L2 = { id: "python-1-2", nazov: "Viac o print", minut: 8, kroky: [
+  /* ====================== Lekcia 2 ====================== */
+  var L2 = { id: "python-1-2", nazov: "Viac o print", minut: 10, kroky: [
     { typ: "vyklad", nadpis: "Viac hodnôt naraz",
-      text: "<p>Do <code>print</code> môžeš dať viac hodnôt oddelených čiarkou. Python medzi ne vloží medzeru:</p>" + UKAZ('print("Mám", 15, "rokov")\nprint("a", "b", "c", sep="-")\nprint("Bez nového riadku", end=" ")\nprint("...pokračujem")', "Mám 15 rokov\na-b-c\nBez nového riadku ...pokračujem"),
-      podrobne: "<ul><li><code>sep</code> = oddeľovač medzi hodnotami (predvolene medzera).</li><li><code>end</code> = čo sa vypíše na konci (predvolene nový riadok).</li></ul>" },
-    { typ: "volba", otazka: "Čo vypíše <code>print(1, 2, 3, sep=\"+\")</code>?", moznosti: ["1+2+3", "6", "1 2 3", "1, 2, 3"], spravna: 0, vysvetlenie: "sep určuje, čo je medzi hodnotami." },
-    { typ: "vyklad", nadpis: "Komentáre a špeciálne znaky",
-      text: PY('# Toto je komentár, Python ho ignoruje\nprint("Riadok 1\\nRiadok 2")   # \\n = nový riadok\nprint("Povedal: \\"Ahoj\\"")      # \\" = úvodzovka v texte\nprint(\'Pes\\tMačka\')               # \\t = tabulátor'),
-      podrobne: "<p>Komentár začína mriežkou <code>#</code>. Píš doňho vysvetlenia pre seba a ostatných. Spätná lomka <code>\\</code> v texte uvádza špeciálny znak. Úvodzovky v texte vyriešiš aj tak, že text ohraničíš iným druhom: <code>'Povedal: \"Ahoj\"'</code>.</p>" },
-    { typ: "volba", otazka: "Ktorý znak začína komentár v Pythone?", moznosti: ["<code>#</code>", "<code>//</code>", "<code>&lt;!--</code>", "<code>--</code>"], spravna: 0, vysvetlenie: "V Pythone je komentár za #." },
-    { typ: "kod", zadanie: "Jedným príkazom <code>print</code> vypíš dátum <b>12.11.2026</b> z troch čísel 12, 11 a 2026 (použi <code>sep</code>).",
+      text: "<p>Do jedného <code>print</code> môžeš dať viac hodnôt naraz. Oddelíš ich <b>čiarkou</b> a Python ich vypíše vedľa seba s medzerou medzi nimi.</p>" + UKAZ('print("Mám", 15, "rokov")\nprint("Výsledok je", 7 * 6)', "Mám 15 rokov\nVýsledok je 42"),
+      podrobne: "<p>Hodnotám v zátvorkách sa hovorí <b>argumenty</b>. V príklade <code>print(\"Mám\", 15, \"rokov\")</code> sú tri: text <code>\"Mám\"</code>, číslo <code>15</code> a text <code>\"rokov\"</code>.</p><p>Výhoda: text a číslo môžeš pokojne kombinovať a medzery medzi ne doplní Python sám. Nemusíš ich písať do úvodzoviek.</p>" + UKAZ('print("Cena:", 3 * 4, "€")', "Cena: 12 €") +
+        "<p><b>Pozor na čiarku v texte:</b> čiarka medzi úvodzovkami je obyčajný znak textu. Čiarka mimo úvodzoviek oddeľuje argumenty.</p>" + UKAZ('print("Ahoj, Jana")\nprint("Ahoj", "Jana")', "Ahoj, Jana\nAhoj Jana"),
+      hlbka: "<p>Funkcia <code>print</code> prijme ľubovoľný počet argumentov. Každý najprv zmení na text a potom ich spojí oddeľovačom, ktorým je predvolene medzera.</p><p>Neskôr sa naučíš aj iný spôsob, ako text a čísla spájať, takzvané <b>f-reťazce</b>: <code>print(f\"Mám {15} rokov\")</code>. Pri začiatkoch je však čiarka najjednoduchšia.</p>" },
+    { typ: "vyklad", nadpis: "Oddeľovač sep a koniec end",
+      text: "<p>Na koniec zátvoriek môžeš pridať dve nastavenia:</p><ul><li><code>sep</code> určuje, čo bude <b>medzi</b> hodnotami (bežne medzera),</li><li><code>end</code> určuje, čo bude <b>na konci</b> výpisu (bežne nový riadok).</li></ul>" + UKAZ('print("a", "b", "c", sep="-")\nprint("Bez nového riadku", end=" ")\nprint("...pokračujem")', "a-b-c\nBez nového riadku ...pokračujem"),
+      podrobne: "<p><code>sep</code> je skratka anglického <i>separator</i>, teda oddeľovač. Hodí sa napríklad na dátum alebo čas:</p>" + UKAZ('print(24, 12, 2026, sep=".")\nprint(14, 30, sep=":")\nprint("A", "B", sep="")', "24.12.2026\n14:30\nAB") +
+        "<p>Prázdny oddeľovač <code>sep=\"\"</code> hodnoty prilepí k sebe bez medzery.</p><p><code>end</code> sa hodí, keď chceš, aby ďalší print pokračoval na tom istom riadku. Bez neho je každý print na novom riadku.</p><p><b>Pozor:</b> <code>sep</code> a <code>end</code> píšeš <b>bez</b> úvodzoviek, ale ich hodnotu <b>v</b> úvodzovkách: <code>sep=\".\"</code>. Patria na koniec, za všetky hodnoty.</p>",
+      hlbka: "<p><code>sep</code> a <code>end</code> sú <b>pomenované argumenty</b> (keyword arguments). Majú predvolené hodnoty <code>sep=\" \"</code> a <code>end=\"\\n\"</code>, kde <code>\\n</code> je znak nového riadku. Keď ich neuvedieš, použijú sa predvolené hodnoty.</p><p>Pomenované argumenty musia byť za obyčajnými, preto <code>print(sep=\"-\", \"a\")</code> skončí chybou SyntaxError.</p>" },
+    { typ: "volba", otazka: "Čo vypíše <code>print(1, 2, 3, sep=\"+\")</code>?", moznosti: ["1+2+3", "6", "1 2 3", "1, 2, 3"], spravna: 0,
+      vysvetlenie: "sep určuje len to, čo sa vypíše medzi hodnotami. Python nič nesčíta, iba medzi čísla vloží znak +." },
+    { typ: "vyklad", nadpis: "Komentáre",
+      text: "<p><b>Komentár</b> je poznámka v kóde určená ľuďom. Začína mriežkou <code>#</code> a Python všetko za ňou až do konca riadku ignoruje.</p>" + UKAZ('# Môj prvý program\nprint("Ahoj")   # pozdrav\n# print("Toto sa nevypíše")', "Ahoj"),
+      podrobne: "<p>Na čo sú komentáre dobré:</p><ul><li><b>Vysvetlenie</b>: o mesiac už nebudeš vedieť, prečo si niečo napísal. Komentár ti to pripomenie.</li><li><b>Dočasné vypnutie riadku</b>: keď pred príkaz dáš <code>#</code>, Python ho preskočí. Pri hľadaní chýb sa to veľmi hodí.</li><li><b>Pomoc pre ostatných</b>: v tíme číta kód viac ľudí.</li></ul><p>Komentár môže byť na samostatnom riadku alebo za príkazom. Mriežka <b>vnútri úvodzoviek</b> však komentár nezačína, je to obyčajný znak textu: <code>print(\"#1 v rebríčku\")</code> vypíše <code>#1 v rebríčku</code>.</p>",
+      hlbka: "<p>Python komentáre odstráni hneď pri čítaní programu, ešte pred jeho spustením. Neovplyvňujú teda rýchlosť ani výsledok.</p><p>Dobrý komentár vysvetľuje <b>prečo</b>, nie <b>čo</b>. Komentár <code># vypíše ahoj</code> nad <code>print(\"ahoj\")</code> je zbytočný. Komentár <code># zákazník chce pozdrav po slovensky</code> vysvetľuje dôvod.</p>" },
+    { typ: "vyklad", nadpis: "Špeciálne znaky v texte",
+      text: "<p>Niektoré znaky sa do textu nedajú napísať priamo. Zapíšeš ich pomocou <b>spätnej lomky</b> <code>\\</code>:</p>" + P.tabulka(["Zápis", "Význam"], [["<code>\\n</code>", "nový riadok"], ["<code>\\t</code>", "tabulátor (väčšia medzera)"], ["<code>\\\"</code>", "úvodzovka vnútri textu"], ["<code>\\\\</code>", "samotná spätná lomka"]]) + UKAZ('print("Riadok 1\\nRiadok 2")\nprint("Povedal: \\"Ahoj\\"")', "Riadok 1\nRiadok 2\nPovedal: \"Ahoj\""),
+      podrobne: "<p>Prečo to treba? Úvodzovka ukončuje text. Keď napíšeš <code>print(\"Povedal: \"Ahoj\"\")</code>, Python si myslí, že text končí za slovom <code>Povedal: </code>, a nasleduje chyba. Spätná lomka pred úvodzovkou Pythonu povie: „toto nie je koniec textu, vypíš úvodzovku“.</p><p>Jednoduchší trik: použi na ohraničenie <b>iný druh</b> úvodzoviek ako vnútri textu.</p>" + UKAZ("print('Povedal: \"Ahoj\"')\nprint(\"Je to Janin pes\")", "Povedal: \"Ahoj\"\nJe to Janin pes") +
+        "<p>Znak <code>\\n</code> je užitočný, keď chceš jedným príkazom vypísať viac riadkov. <code>\\t</code> pomôže zarovnať stĺpce.</p>",
+      hlbka: "<p>Dvojici spätná lomka a znak sa hovorí <b>escape sekvencia</b>. Hoci <code>\\n</code> píšeš ako dva znaky, v texte je to <b>jeden</b> neviditeľný znak nového riadku. Podobne sú escape sekvencie v jazykoch C, Java aj JavaScript.</p><p>Keď chceš, aby spätné lomky ostali tak, ako sú (napríklad pri cestách k súborom vo Windows), daj pred úvodzovky písmeno <code>r</code>: <code>print(r\"C:\\nove\")</code> vypíše <code>C:\\nove</code> a <code>\\n</code> nebude nový riadok.</p>" },
+    { typ: "volba", otazka: "Ktorý znak začína komentár v Pythone?", moznosti: ["<code>#</code>", "<code>//</code>", "<code>&lt;!--</code>", "<code>--</code>"], spravna: 0,
+      vysvetlenie: "V Pythone je komentár za #. Znaky // sa používajú v jazykoch C, Java a JavaScript (v Pythone // znamená celočíselné delenie), &lt;!-- v HTML a -- v SQL." },
+    { typ: "volba", otazka: "Koľko riadkov vypíše <code>print(\"A\\nB\\nC\")</code>?", moznosti: ["3", "1", "2", "chybu"], spravna: 0,
+      vysvetlenie: "Každé \\n je nový riadok. A, B a C budú pod sebou, teda 3 riadky z jedného print." },
+    { typ: "kod", zadanie: "Jedným príkazom <code>print</code> vypíš dátum <b>12.11.2026</b>. Použi tri čísla 12, 11 a 2026 a oddeľovač <code>sep</code>.",
       karty: ["py"], start: { py: "" }, vyska: "120px",
-      napoveda: 'print(12, 11, 2026, sep=".")', riesenie: { py: 'print(12, 11, 2026, sep=".")' },
-      kontrola: function (v, kod) { if (!/sep\s*=/.test(kod)) return "Použi parameter sep."; return r(v)[0] === "12.11.2026" ? null : "Výstup má byť 12.11.2026."; },
-      vysvetlenie: "sep spojil čísla bodkami." },
+      napoveda: 'Tri čísla oddeľ čiarkami a na koniec pridaj sep=".": print(12, 11, 2026, sep=".")', riesenie: { py: 'print(12, 11, 2026, sep=".")' },
+      kontrola: function (v, kod) { if (!/sep\s*=/.test(kod)) return "Použi nastavenie sep, napríklad sep=\".\"."; return r(v)[0] === "12.11.2026" ? null : "Výstup má byť 12.11.2026, bez medzier. Skontroluj, či je oddeľovač bodka v úvodzovkách."; },
+      vysvetlenie: "sep spojil čísla bodkami namiesto medzier. Rovnako vypíšeš čas (sep=\":\") alebo telefónne číslo." },
   ] };
 
-  var L3 = { id: "python-1-3", nazov: "Čítanie chýb", minut: 7, kroky: [
+  /* ====================== Lekcia 3 ====================== */
+  var L3 = { id: "python-1-3", nazov: "Čítanie chýb", minut: 9, kroky: [
     { typ: "vyklad", nadpis: "Chyby sú normálne",
-      text: "<p>Každý programátor robí chyby denne. Dôležité je vedieť ich prečítať. Python pri chybe povie <b>druh chyby</b> a <b>riadok</b>. Táto aplikácia ti chybu preloží do slovenčiny a riadok označí v editore.</p>" + P.tabulka(["Chyba", "Čo znamená"], [["<code>SyntaxError</code>", "zle zapísaný príkaz (chýba úvodzovka, zátvorka, dvojbodka)"], ["<code>NameError</code>", "neznáme meno, často preklep"], ["<code>TypeError</code>", "zlý typ, napr. text + číslo"], ["<code>IndentationError</code>", "zlé odsadenie riadkov"], ["<code>ZeroDivisionError</code>", "delenie nulou"]]),
-      podrobne: "<p>Python rozlišuje veľké a malé písmená: <code>Print(\"Ahoj\")</code> skončí NameError, lebo funkcia sa volá <code>print</code>.</p>" },
-    { typ: "volba", otazka: "Aká chyba vznikne?", kod: 'print("Ahoj)', moznosti: ["SyntaxError: text nie je uzavretý", "NameError", "Žiadna", "ZeroDivisionError"], spravna: 0, vysvetlenie: "Chýba zatváracia úvodzovka." },
-    { typ: "volba", otazka: "Aká chyba vznikne?", kod: 'pirnt("Ahoj")', moznosti: ["NameError: pirnt neexistuje", "SyntaxError", "TypeError", "Vypíše Ahoj"], spravna: 0, vysvetlenie: "Preklep v mene funkcie." },
-    { typ: "kod", zadanie: "Program má tri chyby. Oprav ho, aby vypísal <b>Ahoj</b> a potom <b>3</b>.",
+      text: "<p>Každý programátor robí chyby, aj ten najskúsenejší. Dôležité nie je chybám sa vyhnúť, ale vedieť ich <b>prečítať a opraviť</b>.</p><p>Keď Python nájde chybu, zastaví sa a povie ti tri veci: <b>na ktorom riadku</b> chyba je, <b>aký je to druh chyby</b> a <b>krátky popis</b>. Táto aplikácia chybu navyše preloží do slovenčiny a riadok označí v editore.</p>",
+      podrobne: "<p>Takto vyzerá originálna chybová správa Pythonu:</p>" + PY('Traceback (most recent call last):\n  File "program.py", line 2\n    print("Ahoj)\n          ^\nSyntaxError: unterminated string literal') +
+        "<ul><li><code>line 2</code> je <b>riadok</b>, kde Python chybu zistil.</li><li>Pod kódom je znak <code>^</code>, ktorý ukazuje <b>miesto</b> chyby.</li><li><code>SyntaxError</code> je <b>druh</b> chyby.</li><li>Za dvojbodkou je <b>popis</b>: „neukončený text“.</li></ul><p><b>Postup pri chybe:</b></p><ol><li>Pozri sa na riadok, ktorý chyba udáva, a aj na riadok nad ním.</li><li>Prečítaj si druh chyby. Tabuľka v ďalšom kroku ti povie, čo znamená.</li><li>Oprav jednu vec a spusti program znova.</li></ol>",
+      hlbka: "<p>Chyby sú dvoch druhov:</p><ul><li><b>Syntaktické</b> (SyntaxError, IndentationError): program je zle zapísaný. Python ich nájde ešte <b>pred spustením</b>, preto sa nevykoná ani prvý riadok.</li><li><b>Chyby počas behu</b> (NameError, TypeError, ZeroDivisionError a ďalšie): zápis je v poriadku, ale niečo sa pokazí počas vykonávania. Riadky pred chybou sa stihnú vykonať.</li></ul><p>Slovo <i>Traceback</i> znamená „spätné sledovanie“. Keď sa chyba stane hlboko vo funkcii, Python vypíše celú cestu, ako sa program k chybe dostal. Najdôležitejší je vždy posledný riadok.</p>" },
+    { typ: "vyklad", nadpis: "Najčastejšie chyby",
+      text: P.tabulka(["Chyba", "Čo znamená"], [["<code>SyntaxError</code>", "zle zapísaný príkaz: chýba úvodzovka, zátvorka alebo dvojbodka"], ["<code>NameError</code>", "Python nepozná toto meno, najčastejšie ide o preklep"], ["<code>TypeError</code>", "nevhodný typ hodnoty, napríklad text + číslo"], ["<code>IndentationError</code>", "zlé odsadenie riadku (medzery na začiatku)"], ["<code>ZeroDivisionError</code>", "delenie nulou"]]),
+      podrobne: "<p>Príklady, ako tieto chyby vznikajú:</p>" + P.tabulka(["Kód", "Chyba", "Prečo"], [["<code>print(\"Ahoj)</code>", "SyntaxError", "chýba koncová úvodzovka"], ["<code>Print(\"Ahoj\")</code>", "NameError", "Print s veľkým P neexistuje"], ["<code>print(\"Vek: \" + 15)</code>", "TypeError", "text a číslo sa nedajú spojiť cez +"], ["<code>&nbsp;&nbsp;print(\"Ahoj\")</code>", "IndentationError", "medzery na začiatku riadku, kde nemajú byť"], ["<code>print(5 / 0)</code>", "ZeroDivisionError", "nulou sa deliť nedá"]]) +
+        "<p>Pozor na <b>veľké a malé písmená</b>: pre Python sú <code>print</code>, <code>Print</code> a <code>PRINT</code> tri rôzne mená. Existuje len prvé.</p>",
+      hlbka: "<p>Odsadenie je v Pythone súčasť zápisu. Iné jazyky používajú na označenie blokov kódu zložené zátvorky <code>{ }</code>, Python medzery na začiatku riadku. Preto aj jedna medzera navyše môže spôsobiť chybu. Viac o tom v module o podmienkach.</p><p>Python má desiatky druhov chýb a všetky patria do rodiny <code>Exception</code>. Neskôr sa naučíš chyby aj zachytiť (príkazy <code>try</code> a <code>except</code>), aby program nespadol, napríklad keď používateľ zadá namiesto čísla text.</p>" },
+    { typ: "volba", otazka: "Aká chyba vznikne?", kod: 'print("Ahoj)', moznosti: ["SyntaxError: text nie je ukončený", "NameError", "Žiadna, vypíše Ahoj", "ZeroDivisionError"], spravna: 0,
+      vysvetlenie: "Za Ahoj chýba zatváracia úvodzovka. Python nevie, kde text končí, a ohlási SyntaxError." },
+    { typ: "volba", otazka: "Aká chyba vznikne?", kod: 'pirnt("Ahoj")', moznosti: ["NameError: pirnt neexistuje", "SyntaxError", "TypeError", "Žiadna, vypíše Ahoj"], spravna: 0,
+      vysvetlenie: "Zápis je správny, ale funkcia s menom pirnt neexistuje. Ide o preklep, správne je print. Python neznáme meno ohlási ako NameError." },
+    { typ: "volba", otazka: "Čo uvidíš po spustení tohto programu?", kod: 'print("Začínam")\nprint(10 / 0)\nprint("Koniec")', moznosti: ["Začínam a potom chybu ZeroDivisionError", "Iba chybu, nič sa nevypíše", "Začínam, chybu a potom Koniec", "Začínam a Koniec"], spravna: 0,
+      vysvetlenie: "Delenie nulou je chyba počas behu. Prvý riadok sa stihne vykonať, na druhom sa program zastaví a tretí sa už nevykoná." },
+    { typ: "kod", zadanie: "Tento program má <b>dve chyby</b>. Oprav ho, aby vypísal <b>Ahoj</b> a potom <b>3</b>. Najprv ho spusti a prečítaj si, čo Python hlási.",
       karty: ["py"], start: { py: 'Print("Ahoj")\nprint(1 + 2' }, vyska: "120px",
-      napoveda: "Print s malým p a doplň zátvorku na konci druhého riadku.", riesenie: { py: 'print("Ahoj")\nprint(1 + 2)' },
-      kontrola: function (v) { var l = r(v); return l[0] === "Ahoj" && l[1] === "3" ? null : "Výstup má byť Ahoj a 3."; },
-      vysvetlenie: "Pri chybe si pozri riadok aj vysvetlenie nad editorom." },
+      napoveda: "Prvý riadok: print sa píše s malým p. Druhý riadok: na konci chýba zatváracia zátvorka ).", riesenie: { py: 'print("Ahoj")\nprint(1 + 2)' },
+      kontrola: function (v) { var l = r(v); return l[0] === "Ahoj" && l[1] === "3" ? null : "Výstup má byť Ahoj a pod ním 3. Oprav malé p v print a doplň zátvorku na konci."; },
+      vysvetlenie: "Všimol si si? Python najprv ohlásil chýbajúcu zátvorku (SyntaxError), lebo zápis kontroluje pred spustením. Až po jej oprave našiel Print s veľkým P (NameError)." },
   ] };
 
-  var L4 = { id: "python-1-4", nazov: "Vstup od používateľa", minut: 8, kroky: [
-    { typ: "vyklad", nadpis: "input()",
-      text: "<p><code>input()</code> zastaví program a počká, kým používateľ niečo napíše. Napísaný text vráti:</p>" + UKAZ('meno = input("Ako sa voláš? ")\nprint("Ahoj", meno)', "Ako sa voláš? Jana\nAhoj Jana"),
-      podrobne: "<p>V tejto aplikácii program nečaká: čo program prečíta, napíšeš vopred do poľa <b>Vstup</b> nad výstupom. Každý riadok je jedna odpoveď pre jeden <code>input()</code>.</p><p><code>meno</code> je premenná, do ktorej sa odpoveď uloží. Viac o premenných v ďalšom module.</p>" },
-    { typ: "volba", otazka: "Čo vráti <code>input()</code>?", moznosti: ["Text, ktorý napísal používateľ", "Vždy číslo", "Nič", "True"], spravna: 0, vysvetlenie: "input vždy vracia text (str)." },
-    { typ: "kod", zadanie: "Program sa opýta na obľúbené jedlo (<code>input</code>) a vypíše <b>Aj ja mám rád/a …</b> a jedlo. Vstup je pripravený: <b>pizza</b>.",
+  /* ====================== Lekcia 4 ====================== */
+  var L4 = { id: "python-1-4", nazov: "Vstup od používateľa", minut: 10, kroky: [
+    { typ: "vyklad", nadpis: "Program, ktorý sa pýta",
+      text: "<p>Doteraz programy len vypisovali. Príkaz <code>input()</code> umožní programu <b>opýtať sa</b>. Program sa zastaví, počká, kým používateľ niečo napíše a stlačí Enter, a napísaný text si zapamätá.</p>" + UKAZ('meno = input("Ako sa voláš? ")\nprint("Ahoj", meno)', "Ako sa voláš? Jana\nAhoj Jana"),
+      podrobne: "<p>Čo sa deje krok za krokom:</p><ol><li><code>input(\"Ako sa voláš? \")</code> vypíše otázku a čaká.</li><li>Používateľ napíše <b>Jana</b> a stlačí Enter.</li><li>Text <b>Jana</b> sa uloží pod meno <code>meno</code>.</li><li><code>print(\"Ahoj\", meno)</code> vypíše Ahoj a to, čo je uložené v <code>meno</code>.</li></ol><p><b>V tejto aplikácii</b> program nečaká, kým niečo napíšeš. Odpoveď napíšeš vopred do poľa <b>Vstup</b> nad výstupom a program si ju vezme, keď príde na rad. Každý riadok vstupu je odpoveď pre jeden <code>input()</code>.</p><p>Medzera na konci otázky (<code>\"Ako sa voláš? \"</code>) je tam preto, aby sa odpoveď nelepila na otáznik.</p>",
+      hlbka: "<p><code>input()</code> číta takzvaný <b>štandardný vstup</b> (stdin), bežne klávesnicu v termináli. Prečíta všetko až po stlačenie Enter, samotný Enter však do textu nezahrnie.</p><p>Výsledok je vždy <b>text</b> (typ <code>str</code>), aj keď používateľ napíše číslo. Keď s ním chceš počítať, musíš ho previesť na číslo, napríklad <code>int(input())</code>. To sa naučíš v ďalšom module. Bez prevodu by <code>input() + 1</code> skončilo chybou TypeError.</p>" },
+    { typ: "vyklad", nadpis: "Premenná: škatuľka s menom",
+      text: "<p>V príklade sme odpoveď uložili do <b>premennej</b> <code>meno</code>. Premenná je ako <b>škatuľka s menovkou</b>: niečo do nej vložíš a neskôr sa k tomu dostaneš cez meno.</p>" + UKAZ('mesto = "Košice"\nprint("Bývam v meste", mesto)', "Bývam v meste Košice") +
+        "<p>Znamienko <code>=</code> tu neznamená „rovná sa“ ako v matematike, ale <b>„ulož“</b>: hodnotu sprava ulož do premennej vľavo.</p>",
+      podrobne: "<p>Premenná sa hodí, keď hodnotu potrebuješ viackrát alebo ju zatiaľ nepoznáš, napríklad pri odpovedi od používateľa.</p><p>Pravidlá pre mená premenných:</p><ul><li>len písmená bez diakritiky, číslice a podčiarkovník <code>_</code>, napríklad <code>meno</code>, <code>vek2</code>, <code>oblubene_jedlo</code>,</li><li>nesmú začínať číslicou a nesmú obsahovať medzeru,</li><li>záleží na veľkosti písmen: <code>meno</code> a <code>Meno</code> sú dve rôzne premenné.</li></ul><p>Pozor na rozdiel medzi <code>print(meno)</code> a <code>print(\"meno\")</code>. Prvý vypíše <b>obsah</b> premennej (napríklad Jana), druhý doslova slovo <b>meno</b>.</p>",
+      hlbka: "<p>Presnejšie povedané, premenná v Pythone je <b>meno, ktoré ukazuje na hodnotu</b> uloženú v pamäti, skôr menovka prilepená na vec ako škatuľka. Keď napíšeš <code>a = b</code>, obe mená ukazujú na tú istú hodnotu. Pri textoch a číslach to nevadí, pri zoznamoch to bude dôležité.</p><p>Python podporuje aj mená s diakritikou (<code>mesto_č</code>), ale programátori ich nepoužívajú, lebo robia problémy pri spolupráci a na rôznych klávesniciach.</p>" },
+    { typ: "volba", otazka: "Čo vráti <code>input()</code>?", moznosti: ["Text, ktorý napísal používateľ", "Vždy číslo", "Nič", "Otázku v zátvorkách"], spravna: 0,
+      vysvetlenie: "input vráti presne to, čo používateľ napísal, a to vždy ako text, aj keď napíše číslice." },
+    { typ: "volba", otazka: "Čo znamená <code>=</code> v riadku <code>vek = input()</code>?", moznosti: ["Ulož odpoveď do premennej vek", "Porovnaj, či sa vek rovná odpovedi", "Vypíš vek", "Vymaž premennú vek"], spravna: 0,
+      vysvetlenie: "Jedno = je v Pythone priradenie: hodnotu sprava ulož pod meno vľavo. Na porovnanie sa používa ==, to príde v module o podmienkach." },
+    { typ: "kod", zadanie: "Program sa opýta na obľúbené jedlo (to je už pripravené) a ty doplň výpis <b>Aj ja mám rád/a …</b> a za ním jedlo. Vstup je pripravený v poli Vstup: <b>pizza</b>.",
       karty: ["py"], vstup: "pizza", start: { py: 'jedlo = input("Obľúbené jedlo? ")\n' }, vyska: "130px",
-      napoveda: 'print("Aj ja mám rád/a", jedlo)', riesenie: { py: 'jedlo = input("Obľúbené jedlo? ")\nprint("Aj ja mám rád/a", jedlo)' },
-      kontrola: function (v) { var l = r(v); return /Aj ja mám rád\/a pizza/.test(l[l.length - 1]) ? null : "Posledný riadok má byť: Aj ja mám rád/a pizza"; },
-      vysvetlenie: "Skús zmeniť vstup na iné jedlo a spustiť znova." },
+      napoveda: 'Pridaj druhý riadok: print("Aj ja mám rád/a", jedlo). Pozor, jedlo bez úvodzoviek, lebo chceš obsah premennej.', riesenie: { py: 'jedlo = input("Obľúbené jedlo? ")\nprint("Aj ja mám rád/a", jedlo)' },
+      kontrola: function (v) { var l = r(v); return /Aj ja mám rád\/a pizza/.test(l[l.length - 1]) ? null : (/Aj ja mám rád\/a jedlo/.test(v) ? "Vypísalo sa slovo jedlo. Daj premennú jedlo bez úvodzoviek." : "Posledný riadok má byť: Aj ja mám rád/a pizza"); },
+      vysvetlenie: "Skús v poli Vstup zmeniť pizza na iné jedlo a spusti program znova. Ten istý program dá iný výsledok." },
   ] };
 
-  var L5 = { id: "python-1-5", nazov: "Python ako kalkulačka", minut: 8, kroky: [
+  /* ====================== Lekcia 5 ====================== */
+  var L5 = { id: "python-1-5", nazov: "Python ako kalkulačka", minut: 10, kroky: [
     { typ: "vyklad", nadpis: "Matematické operátory",
-      text: P.tabulka(["Operátor", "Význam", "Príklad", "Výsledok"], [["<code>+ - *</code>", "plus, mínus, krát", "<code>3 * 4</code>", "12"], ["<code>/</code>", "delenie", "<code>7 / 2</code>", "3.5"], ["<code>//</code>", "celočíselné delenie", "<code>7 // 2</code>", "3"], ["<code>%</code>", "zvyšok", "<code>7 % 2</code>", "1"], ["<code>**</code>", "mocnina", "<code>2 ** 10</code>", "1024"]]),
-      podrobne: "<p>Poradie ako v matematike, zátvorky ho menia. Delenie <code>/</code> vráti vždy desatinné číslo: <code>6 / 2</code> = <code>3.0</code>. Python počíta aj s obrovskými číslami: skús <code>2 ** 100</code>.</p>" },
-    { typ: "volba", otazka: "Koľko je <code>17 // 5</code>?", moznosti: ["3", "3.4", "2", "85"], spravna: 0, vysvetlenie: "Celočíselné delenie zahodí desatinnú časť." },
-    { typ: "volba", otazka: "Koľko je <code>17 % 5</code>?", moznosti: ["2", "3", "3.4", "0"], spravna: 0, vysvetlenie: "17 = 3 × 5 + 2." },
-    { typ: "kod", zadanie: "Máš 125 minút. Vypíš, koľko je to celých hodín a zvyšných minút, vo formáte <b>2 h 5 min</b> (použi <code>//</code> a <code>%</code>).",
+      text: "<p>Python vie počítať ako kalkulačka. Znakom na počítanie sa hovorí <b>operátory</b>:</p>" + P.tabulka(["Operátor", "Význam", "Príklad", "Výsledok"], [["<code>+ -</code>", "plus, mínus", "<code>7 - 2</code>", "5"], ["<code>*</code>", "krát", "<code>3 * 4</code>", "12"], ["<code>/</code>", "delenie", "<code>7 / 2</code>", "3.5"], ["<code>//</code>", "celočíselné delenie", "<code>7 // 2</code>", "3"], ["<code>%</code>", "zvyšok po delení", "<code>7 % 2</code>", "1"], ["<code>**</code>", "mocnina", "<code>2 ** 3</code>", "8"]]),
+      podrobne: "<p><b>Násobenie</b> sa píše hviezdičkou <code>*</code>, nie bodkou ani písmenom x. <b>Desatinné čísla</b> sa píšu s <b>bodkou</b>, nie s čiarkou: <code>2.5</code>. Čiarka by oddelila dve čísla.</p><p><b>Celočíselné delenie a zvyšok</b> poznáš zo základnej školy: 7 : 2 = 3, zvyšok 1. V Pythone:</p>" + UKAZ("print(7 // 2)   # koľkokrát sa 2 zmestí do 7\nprint(7 % 2)    # čo zostane", "3\n1") +
+        "<p>Kde sa to hodí: <code>% 2</code> zistí, či je číslo párne (zvyšok 0) alebo nepárne (zvyšok 1). <code>// 60</code> a <code>% 60</code> prevedú minúty na hodiny a minúty.</p><p>Obyčajné delenie <code>/</code> vráti <b>vždy desatinné číslo</b>, aj keď vyjde celé: <code>6 / 2</code> je <code>3.0</code>.</p>",
+      hlbka: "<p>Python rozlišuje <b>celé čísla</b> (typ <code>int</code>, napríklad 3) a <b>desatinné</b> (typ <code>float</code>, napríklad 3.0). Celé čísla môžu byť ľubovoľne veľké: skús <code>print(2 ** 100)</code>. Kalkulačka by ukázala len zaokrúhlený výsledok.</p><p>Desatinné čísla sú v počítači uložené v dvojkovej sústave a niektoré sa nedajú zapísať presne. Preto <code>print(0.1 + 0.2)</code> vypíše <code>0.30000000000000004</code>. Nie je to chyba Pythonu, rovnako sa správajú takmer všetky jazyky. Pri peniazoch sa preto počíta v centoch alebo s modulom <code>decimal</code>.</p><p>Pozor: <code>^</code> v Pythone <b>nie je</b> mocnina, ale bitová operácia XOR. <code>2 ^ 3</code> je 1, nie 8.</p>" },
+    { typ: "vyklad", nadpis: "Poradie operácií",
+      text: "<p>Python počíta v rovnakom poradí ako v matematike: najprv <b>mocnina</b>, potom <b>násobenie a delenie</b>, nakoniec <b>sčítanie a odčítanie</b>. Poradie zmeníš <b>zátvorkami</b>.</p>" + UKAZ("print(2 + 3 * 4)\nprint((2 + 3) * 4)", "14\n20"),
+      podrobne: "<p>V prvom riadku sa najprv vynásobí 3 * 4 = 12 a potom sa pripočíta 2. V druhom riadku zátvorky prikážu najprv sčítať 2 + 3 = 5 a potom násobiť.</p>" + P.tabulka(["Poradie", "Operátory"], [["1.", "<code>( )</code> zátvorky"], ["2.", "<code>**</code> mocnina"], ["3.", "<code>* / // %</code> násobenie a delenie"], ["4.", "<code>+ -</code> sčítanie a odčítanie"]]) +
+        "<p>Rada: keď si nie si istý, pridaj zátvorky. Nič nepokazia a kód sa lepšie číta. Napríklad priemer dvoch čísel je <code>(8 + 6) / 2</code>, nie <code>8 + 6 / 2</code>.</p>",
+      hlbka: "<p>Operátory s rovnakou prioritou sa počítajú zľava doprava: <code>20 / 5 * 2</code> je <code>(20 / 5) * 2 = 8.0</code>. Výnimkou je mocnina, ktorá sa počíta sprava: <code>2 ** 3 ** 2</code> je <code>2 ** 9 = 512</code>.</p><p>Zvláštnosť: <code>-2 ** 2</code> je <code>-4</code>, lebo mocnina má prednosť pred znamienkom mínus. Ak chceš (−2)², napíš <code>(-2) ** 2</code>.</p>" },
+    { typ: "volba", otazka: "Koľko je <code>17 // 5</code>?", moznosti: ["3", "3.4", "2", "85"], spravna: 0,
+      vysvetlenie: "5 sa do 17 zmestí trikrát (3 × 5 = 15). Celočíselné delenie desatinnú časť zahodí, výsledok je 3." },
+    { typ: "volba", otazka: "Koľko je <code>17 % 5</code>?", moznosti: ["2", "3", "3.4", "0"], spravna: 0,
+      vysvetlenie: "17 = 3 × 5 + 2. Po delení zostane 2, a to je zvyšok." },
+    { typ: "volba", otazka: "Čo vypíše <code>print(2 + 3 * 4)</code>?", moznosti: ["14", "20", "24", "2 + 3 * 4"], spravna: 0,
+      vysvetlenie: "Násobenie má prednosť: 3 * 4 = 12 a 2 + 12 = 14. Výsledok 20 by vyšiel so zátvorkami (2 + 3) * 4." },
+    { typ: "kod", zadanie: "Film trvá 125 minút. Vypíš, koľko je to celých hodín a zvyšných minút, vo formáte <b>2 h 5 min</b>. Použi <code>//</code> (celé hodiny) a <code>%</code> (zvyšné minúty). Premenná <code>minuty</code> je pripravená.",
       karty: ["py"], start: { py: "minuty = 125\n" }, vyska: "140px",
-      napoveda: 'print(minuty // 60, "h", minuty % 60, "min")', riesenie: { py: 'minuty = 125\nprint(minuty // 60, "h", minuty % 60, "min")' },
-      kontrola: function (v, kod) { if (!/\/\//.test(kod) || !/%/.test(kod)) return "Použi // aj %."; return r(v)[0] === "2 h 5 min" ? null : "Výstup má byť 2 h 5 min."; },
-      vysvetlenie: "// a % sú dvojica na prevody jednotiek." },
+      napoveda: 'Hodín je minuty // 60, zvyšné minúty sú minuty % 60. Spoj to v print: print(minuty // 60, "h", minuty % 60, "min")', riesenie: { py: 'minuty = 125\nprint(minuty // 60, "h", minuty % 60, "min")' },
+      kontrola: function (v, kod) { if (!/\/\//.test(kod) || !/%/.test(kod)) return "Použi // aj %: celé hodiny sú minuty // 60, zvyšok minuty % 60."; return r(v)[0] === "2 h 5 min" ? null : "Výstup má byť 2 h 5 min. Skontroluj poradie hodnôt v print."; },
+      vysvetlenie: "// a % sú dvojica na prevody jednotiek: minúty na hodiny, centy na eurá, sekundy na minúty." },
     { typ: "vyklad", nadpis: "Modul 1 máš za sebou",
-      text: "<ul><li><code>print()</code>, <code>sep</code>, <code>end</code>, komentáre <code>#</code>.</li><li>Čítanie chýb: SyntaxError, NameError…</li><li><code>input()</code>.</li><li>Operátory <code>+ - * / // % **</code>.</li></ul>", tip: "Teraz test. Potom Modul 2: premenné a čísla." },
+      text: "<p>Čo už vieš:</p><ul><li>čo je <b>program</b> a prečo záleží na každom znaku,</li><li>vypísať text aj výpočty cez <code>print()</code>, s nastaveniami <code>sep</code> a <code>end</code>,</li><li>písať <b>komentáre</b> <code>#</code> a špeciálne znaky <code>\\n</code>, <code>\\\"</code>,</li><li>prečítať <b>chybu</b> a nájsť riadok, kde vznikla,</li><li>opýtať sa používateľa cez <code>input()</code> a uložiť odpoveď do <b>premennej</b>,</li><li>počítať s operátormi <code>+ - * / // % **</code> v správnom poradí.</li></ul>",
+      podrobne: "<p>Ak si niečo nie si istý, vráť sa k lekcii. Hotové lekcie sú stále otvorené. Otázky, pri ktorých si sa pomýlil, ti aplikácia neskôr pripomenie v <b>Opakovaní</b>.</p>",
+      tip: "Teraz príde test modulu (treba 70 %). Potom Modul 2: premenné a čísla podrobnejšie." },
   ] };
 
   var TEST = [
-    { typ: "volba", lekcia: "python-1-1", otazka: "Čo je správny zápis výpisu?", moznosti: ["<code>print(\"Ahoj\")</code>", "<code>console.log(\"Ahoj\")</code>", "<code>echo \"Ahoj\"</code>", "<code>print \"Ahoj\";</code>"], spravna: 0, vysvetlenie: "V Pythone 3 je print funkcia so zátvorkami." },
+    { typ: "volba", lekcia: "python-1-1", otazka: "Čo je správny zápis výpisu v Pythone?", moznosti: ["<code>print(\"Ahoj\")</code>", "<code>console.log(\"Ahoj\")</code>", "<code>echo \"Ahoj\"</code>", "<code>Print(\"Ahoj\")</code>"], spravna: 0, vysvetlenie: "print s malým p, zátvorky a text v úvodzovkách. console.log je JavaScript, echo je PHP." },
+    { typ: "volba", lekcia: "python-1-1", otazka: "Čo vypíše <code>print(\"3 + 3\")</code>?", moznosti: ["3 + 3", "6", "33", "chybu"], spravna: 0, vysvetlenie: "V úvodzovkách je to text, preto sa vypíše doslova." },
     { typ: "volba", lekcia: "python-1-2", otazka: "Čo vypíše <code>print(\"A\", \"B\")</code>?", moznosti: ["A B", "AB", "A, B", "A+B"], spravna: 0, vysvetlenie: "Predvolený oddeľovač je medzera." },
-    { typ: "volba", lekcia: "python-1-2", otazka: "Čo spraví <code>\\n</code> v texte?", moznosti: ["Nový riadok", "Vypíše n", "Komentár", "Chybu"], spravna: 0, vysvetlenie: "\\n = new line." },
+    { typ: "volba", lekcia: "python-1-2", otazka: "Čo spraví <code>\\n</code> v texte?", moznosti: ["Nový riadok", "Vypíše n", "Komentár", "Chybu"], spravna: 0, vysvetlenie: "\\n je znak nového riadku (z angl. new line)." },
+    { typ: "volba", lekcia: "python-1-2", otazka: "Čo Python urobí s riadkom <code># print(\"Ahoj\")</code>?", moznosti: ["Nič, je to komentár", "Vypíše Ahoj", "Vypíše # print(\"Ahoj\")", "Ohlási chybu"], spravna: 0, vysvetlenie: "Všetko za # je komentár, ktorý Python preskočí." },
     { typ: "volba", lekcia: "python-1-3", otazka: "Aká chyba vznikne pri <code>print(5 / 0)</code>?", moznosti: ["ZeroDivisionError", "SyntaxError", "NameError", "Žiadna"], spravna: 0, vysvetlenie: "Nulou sa deliť nedá." },
-    { typ: "volba", lekcia: "python-1-3", otazka: "Prečo nefunguje <code>Print(\"x\")</code>?", moznosti: ["Python rozlišuje veľké a malé písmená", "Chýba bodkočiarka", "x musí byť číslo", "Funguje"], spravna: 0, vysvetlenie: "Funkcia sa volá print." },
-    { typ: "volba", lekcia: "python-1-4", otazka: "Aký typ hodnoty vráti <code>input()</code>?", moznosti: ["text (str)", "číslo (int)", "desatinné (float)", "závisí od vstupu"], spravna: 0, vysvetlenie: "Vždy text." },
-    { typ: "doplnenie", lekcia: "python-1-5", otazka: "Dvojka na tretiu:", sablona: "print(2 [[0]] 3)  # 8", zetony: ["**", "^", "*", "//"], spravne: ["**"], vysvetlenie: "** je mocnina. ^ v Pythone znamená niečo iné." },
-    { typ: "volba", lekcia: "python-1-5", otazka: "Čo vypíše <code>print(8 / 2)</code>?", moznosti: ["4.0", "4", "8/2", "chybu"], spravna: 0, vysvetlenie: "/ vždy vráti desatinné číslo." },
+    { typ: "volba", lekcia: "python-1-3", otazka: "Prečo nefunguje <code>Print(\"x\")</code>?", moznosti: ["Python rozlišuje veľké a malé písmená", "Chýba bodkočiarka", "x musí byť číslo", "Funguje"], spravna: 0, vysvetlenie: "Funkcia sa volá print, s malým p." },
+    { typ: "volba", lekcia: "python-1-4", otazka: "Aký typ hodnoty vráti <code>input()</code>?", moznosti: ["text (str)", "číslo (int)", "desatinné číslo (float)", "závisí od toho, čo používateľ napíše"], spravna: 0, vysvetlenie: "Vždy text, aj keď používateľ napíše číslice." },
+    { typ: "doplnenie", lekcia: "python-1-5", otazka: "Dvojka na tretiu:", sablona: "print(2 [[0]] 3)  # 8", zetony: ["**", "^", "*", "//"], spravne: ["**"], vysvetlenie: "** je mocnina. ^ v Pythone znamená niečo iné (bitový XOR)." },
+    { typ: "volba", lekcia: "python-1-5", otazka: "Čo vypíše <code>print((4 + 2) * 3)</code>?", moznosti: ["18", "10", "4 + 6", "chybu"], spravna: 0, vysvetlenie: "Zátvorky majú prednosť: 4 + 2 = 6 a 6 * 3 = 18." },
   ];
 
-  K.registrujModul("python", { cislo: 1, nazov: "Prvé príkazy", popis: "Čo je Python, výpis cez print, komentáre, čítanie chýb, vstup a počítanie.", lekcie: [L1, L2, L3, L4, L5], test: { otazky: TEST, potrebne: 70 } });
+  K.registrujModul("python", { cislo: 1, nazov: "Prvé príkazy", popis: "Čo je program, výpis cez print, komentáre, čítanie chýb, vstup, premenné a počítanie.", lekcie: [L1, L2, L3, L4, L5], test: { otazky: TEST, potrebne: 70 } });
 })();

@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><title>lista</title>
+<!-- Overí, že každé tlačidlo na lište so znakmi v editore vloží svoj znak (každý jazyk). -->
+<iframe id="app" src="../web/index.html" style="width:412px;height:900px"></iframe><pre id="v"></pre>
+<script>
+document.getElementById("app").onload = function () {
+  var w = this.contentWindow, K = w.K, d = w.document, out = [], zle = 0;
+  ["html","css","js","py","cpp","sql","c","java","cs","kt","st","php"].forEach(function (j) {
+    var s = {}; s[j] = ""; var api = K.Editor({ subory: s, karty: [j] }); d.body.appendChild(api.el);
+    var ta = api.el.querySelector("textarea"), tl = api.el.querySelectorAll(".znaky button"), zn = [];
+    tl.forEach(function (b) {
+      var z = b.dataset.z; if (z === "spat" || z === "Tab") return;
+      ta.value = ""; ta.focus(); ta.setSelectionRange(0, 0); b.click();
+      if (ta.value.indexOf(z) !== 0) { zle++; out.push("ZLE " + j + " " + z + " → " + JSON.stringify(ta.value)); }
+      zn.push(z);
+    });
+    out.push(j + " (" + zn.length + "): " + zn.join(" ") + (zn.indexOf("\\") >= 0 ? "   [\ áno]" : ""));
+    api.el.remove();
+  });
+  document.getElementById("v").textContent = (zle ? "CHYBY " + zle : "VŠETKO OK") + "\n" + out.join("\n");
+};
+</script>

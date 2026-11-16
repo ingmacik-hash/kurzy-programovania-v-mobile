@@ -1,0 +1,75 @@
+<!doctype html><meta charset="utf-8"><title>uvod</title>
+<!-- Test úvodu, dotazníka a osobného plánu. Spúšťať s čistým profilom prehliadača (--user-data-dir). -->
+<iframe id="app" src="../web/index.html" style="width:412px;height:900px"></iframe><pre id="v"></pre>
+<script>
+var out = [], zle = 0;
+function ok(podm, text) { if (!podm) { zle++; out.push("ZLE: " + text); } else out.push("ok: " + text); }
+function cakaj(f, ms) { ms = ms || 5000; var t0 = Date.now(); return new Promise(function (res, rej) { (function s() { var r; try { r = f(); } catch (e) {} if (r) res(r); else if (Date.now() - t0 > ms) rej(new Error("čas")); else setTimeout(s, 50); })(); }); }
+document.getElementById("app").onload = async function () {
+  var w = this.contentWindow, d = w.document, K = w.K;
+  try {
+    // 1) nový používateľ: úvod sa ukáže namiesto domova
+    ok(w.location.hash === "#uvod", "prvé spustenie otvorí úvod (" + w.location.hash + ")");
+    var strany = 0;
+    while (w.location.hash.indexOf("#uvod") === 0) {
+      strany++; var dl = d.querySelector("[data-dalej]"); ok(!!d.querySelector(".uv-telo h1"), "strana úvodu " + strany + ": " + d.querySelector(".uv-telo h1").textContent);
+      if (strany === 3) { ok(K.androidSpat() === true && d.querySelector(".uv-telo h1").textContent.indexOf("poskladaný") >= 0, "Späť v úvode vráti o stranu"); d.querySelector("[data-dalej]").click(); }
+      dl = d.querySelector("[data-dalej]"); dl.click(); await new Promise(function (r) { setTimeout(r, 30); });
+      if (strany > 20) break;
+    }
+    ok(strany === 8, "úvod má 8 strán (" + strany + ")");
+    ok(w.location.hash === "#dotaznik" && K.stav.uvodVideny, "po úvode príde dotazník a úvod je označený");
+    // 2) dotazník
+    var volby = { vek: "18-25", skusenosti: "nic", cinnost: "vs", preco: "profesia", zaujem: ["web", "data"], ciel: "junior", minut: "30", dni: "5" };
+    for (var i = 0; i < K.OTAZKY.length; i++) {
+      var q = K.OTAZKY[i], dal = d.querySelector("[data-dalej]");
+      ok(dal.disabled, "otázka " + (i + 1) + " bez odpovede má vypnuté Ďalej");
+      var v = [].concat(volby[q.id]);
+      v.forEach(function (x) { d.querySelector('[data-v="' + x + '"]').click(); });
+      ok(!d.querySelector("[data-dalej]").disabled, "otázka " + q.id + " po výbere zapne Ďalej");
+      d.querySelector("[data-dalej]").click();
+      await new Promise(function (r) { setTimeout(r, 30); });
+    }
+    await cakaj(function () { return w.location.hash === "#plan" && d.querySelector(".plan-os"); });
+    var p = K.stav.plan;
+    ok(p && p.kurzy.join(",") === "html,css,js,python,sql,php", "plán pre web + dáta, junior: " + (p && p.kurzy.join(",")));
+    ok(K.stav.nast.ciel === 30, "denný cieľ nastavený na 30 min");
+    ok(d.querySelectorAll(".plan-os li").length === p.kurzy.length, "obrazovka plánu ukazuje všetky kurzy");
+    ok(d.querySelectorAll(".plan-odpor .karta").length >= 3, "plán má aspoň 3 odporúčania");
+    ok(/Cesta k prvej práci/.test(d.body.textContent), "odporúčanie pre profesiu je v pláne");
+    // 3) domov a profil majú kartu plánu
+    K.ist("domov", true); ok(!!d.querySelector(".plan-karta") && /kurz 1 z 6/.test(d.querySelector(".plan-karta").textContent), "domov má kartu Môj plán");
+    K.ist("profil", true); ok(!!d.querySelector('.plan-karta') && !!d.querySelector('a[href="#uvod"]'), "profil má plán a odkaz na úvod");
+    // 4) úprava odpovedí zachová predvolené hodnoty
+    K.ist("dotaznik", true); ok(d.querySelector(".volba-uv.on") && d.querySelector(".volba-uv.on").dataset.v === "18-25", "dotaznik pamätá predchádzajúce odpovede");
+    // 5) pokrok v pláne
+    K.stav.hotove["html-1-1"] = true; var sp = K.stavPlanu(p); ok(K.hotoveMinuty("html") > 0 && sp.aktualny.x.id === "html", "pokrok v pláne sa počíta (" + K.hotoveMinuty("html") + " min)");
+    for (var hl in K.moduly.html[0].lekcie) K.stav.hotove[K.moduly.html[0].lekcie[hl].id] = true;
+    ok(K.stavPlanu(p).pct > 0, "po celom module je pokrok v pláne " + K.stavPlanu(p).pct + " %");
+    K.moduly.html[0].lekcie.forEach(function (l) { delete K.stav.hotove[l.id]; });
+    delete K.stav.hotove["html-1-1"];
+    // 6) všetky kombinácie odpovedí dajú platný plán
+    var O = {}; K.OTAZKY.forEach(function (q) { O[q.id] = q.volby.map(function (x) { return x[0]; }); });
+    var pocet = 0, chyby = 0, detiZle = 0, prazdne = 0;
+    O.vek.forEach(function (vek) { O.skusenosti.forEach(function (sk) { O.cinnost.forEach(function (ci) { O.preco.forEach(function (pr) { O.zaujem.forEach(function (za) { O.ciel.forEach(function (ce) {
+      [["5", "3"], ["60", "7"]].forEach(function (cas) {
+        pocet++;
+        var pl = K.zostavPlan({ vek: vek, skusenosti: sk, cinnost: ci, preco: pr, zaujem: [za], ciel: ce, minut: cas[0], dni: cas[1] });
+        if (!pl.kurzy.length) prazdne++;
+        pl.kurzy.forEach(function (k) { if (!K.moduly[k]) chyby++; });
+        if (vek === "do12" && pl.kurzy[0] && ["c", "cpp", "java", "csharp"].indexOf(pl.kurzy[0]) >= 0) detiZle++;
+        var h = K.harmonogram(pl); if (h.some(function (x) { return !(x.minut > 0) || !/^\d{4}-\d\d-\d\d$/.test(x.koniec); })) chyby++;
+        var r = K.odporucania(pl); if (r.length < 2 || r.length > 5) chyby++;
+      });
+    }); }); }); }); }); });
+    ok(chyby === 0 && prazdne === 0, "všetkých " + pocet + " kombinácií dá platný plán");
+    ok(detiZle === 0, "deťom do 12 rokov plán nezačína C, C++, Javou ani C#");
+    // preskočenie celého dotazníka
+    var pr = K.zostavPlan({}); ok(pr.kurzy.length >= 1 && pr.minut === 10, "plán bez odpovedí: " + pr.kurzy.join(","));
+    // 7) existujúci používateľ s videným úvodom ide rovno domov
+    K.stav.uvodVideny = true; K.uloz();
+  } catch (e) { zle++; out.push("VÝNIMKA: " + e.message + " " + e.stack); }
+  document.getElementById("v").textContent = (zle ? "CHYBY " + zle : "VŠETKO OK") + "\n" + out.join("\n");
+  document.title = "HOTOVO";
+};
+</script>

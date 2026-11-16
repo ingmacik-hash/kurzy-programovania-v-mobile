@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="sk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyntaxCode – Zásady ochrany súkromia</title>
+<style>
+:root{--bg:#f3f4f8;--surface:#fff;--text:#141725;--muted:#5b6176;--accent:#2f5bea;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0f17;--surface:#151926;--text:#e8eaf2;--muted:#959bb0;--accent:#7f9bff;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:32px max(16px,env(safe-area-inset-left)) 48px max(16px,env(safe-area-inset-right))}
+.karta{background:var(--surface);border-radius:16px;padding:20px 22px}
+h1{font-size:28px;line-height:1.2;margin:0 0 16px}h2{font-size:19px;margin:22px 0 6px}
+.tlmene{color:var(--muted)}a{color:var(--accent)}ul{padding-left:22px}
+</style></head>
+<body><main><p class="tlmene" style="margin:0 0 4px;font-weight:600;letter-spacing:.04em">SYNTAXCODE</p><h1 id="n"></h1><div class="karta" id="t"></div></main>
+<script src="kurzy/sukromie.js"></script>
+<script>document.getElementById("n").textContent = K.SUKROMIE.nazov; document.getElementById("t").innerHTML = K.sukromieHtml();</script>
+</body></html>

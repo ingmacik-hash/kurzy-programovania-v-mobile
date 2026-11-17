@@ -32,18 +32,18 @@ document.getElementById("app").onload = async function () {
     }
     await cakaj(function () { return w.location.hash === "#plan" && d.querySelector(".plan-os"); });
     var p = K.stav.plan;
-    ok(p && p.kurzy.join(",") === "html,css,js,python,sql,php", "plán pre web + dáta, junior: " + (p && p.kurzy.join(",")));
+    ok(p && p.kurzy.join(",") === "zaklady,html,css,js,python,sql,php", "plán pre začiatočníka (web + dáta, junior) začína Základmi: " + (p && p.kurzy.join(",")));
     ok(K.stav.nast.ciel === 30, "denný cieľ nastavený na 30 min");
     ok(d.querySelectorAll(".plan-os li").length === p.kurzy.length, "obrazovka plánu ukazuje všetky kurzy");
     ok(d.querySelectorAll(".plan-odpor .karta").length >= 3, "plán má aspoň 3 odporúčania");
     ok(/Cesta k prvej práci/.test(d.body.textContent), "odporúčanie pre profesiu je v pláne");
     // 3) domov a profil majú kartu plánu
-    K.ist("domov", true); ok(!!d.querySelector(".plan-karta") && /kurz 1 z 6/.test(d.querySelector(".plan-karta").textContent), "domov má kartu Môj plán");
+    K.ist("domov", true); ok(!!d.querySelector(".plan-karta") && /kurz 1 z 7/.test(d.querySelector(".plan-karta").textContent), "domov má kartu Môj plán");
     K.ist("profil", true); ok(!!d.querySelector('.plan-karta') && !!d.querySelector('a[href="#uvod"]'), "profil má plán a odkaz na úvod");
     // 4) úprava odpovedí zachová predvolené hodnoty
     K.ist("dotaznik", true); ok(d.querySelector(".volba-uv.on") && d.querySelector(".volba-uv.on").dataset.v === "18-25", "dotaznik pamätá predchádzajúce odpovede");
     // 5) pokrok v pláne
-    K.stav.hotove["html-1-1"] = true; var sp = K.stavPlanu(p); ok(K.hotoveMinuty("html") > 0 && sp.aktualny.x.id === "html", "pokrok v pláne sa počíta (" + K.hotoveMinuty("html") + " min)");
+    K.stav.hotove["html-1-1"] = true; var sp = K.stavPlanu(p); ok(K.hotoveMinuty("html") > 0 && sp.aktualny.x.id === "zaklady", "pokrok v pláne sa počíta (" + K.hotoveMinuty("html") + " min)");
     for (var hl in K.moduly.html[0].lekcie) K.stav.hotove[K.moduly.html[0].lekcie[hl].id] = true;
     ok(K.stavPlanu(p).pct > 0, "po celom module je pokrok v pláne " + K.stavPlanu(p).pct + " %");
     K.moduly.html[0].lekcie.forEach(function (l) { delete K.stav.hotove[l.id]; });
@@ -65,7 +65,8 @@ document.getElementById("app").onload = async function () {
     ok(chyby === 0 && prazdne === 0, "všetkých " + pocet + " kombinácií dá platný plán");
     ok(detiZle === 0, "deťom do 12 rokov plán nezačína C, C++, Javou ani C#");
     // preskočenie celého dotazníka
-    var pr = K.zostavPlan({}); ok(pr.kurzy.length >= 1 && pr.minut === 10, "plán bez odpovedí: " + pr.kurzy.join(","));
+    var pr = K.zostavPlan({}); ok(pr.kurzy.length >= 2 && pr.kurzy[0] === "zaklady" && pr.minut === 10, "plán bez odpovedí začína Základmi: " + pr.kurzy.join(","));
+    var sk = K.zostavPlan({ skusenosti: "pokrocily", zaujem: ["web"] }); ok(sk.kurzy.indexOf("zaklady") < 0, "skúsený programátor Základy v pláne nemá: " + sk.kurzy.join(","));
     // 7) existujúci používateľ s videným úvodom ide rovno domov
     K.stav.uvodVideny = true; K.uloz();
   } catch (e) { zle++; out.push("VÝNIMKA: " + e.message + " " + e.stack); }

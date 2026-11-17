@@ -76,6 +76,7 @@ flutter:
     - assets/web/kurzy/kotlin/
     - assets/web/kurzy/php/
     - assets/web/kurzy/smalltalk/
+    - assets/web/kurzy/zaklady/
     - assets/web/lib/
 
   # To add assets to your application, add an assets section, like this:

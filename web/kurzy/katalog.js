@@ -1,5 +1,12 @@
 /* Zoznam jazykov. Kurz sa zobrazí ako dostupný, keď má aspoň jeden modul (kurzy/<id>/modulN.js). */
 K.registrujKurz({
+  id: "zaklady", nazov: "Základy programovania", skratka: "01", farba: "#b45309", naFarbe: "#ffffff",
+  podtitul: "Ako programovanie funguje",
+  popis: "Kurz pred všetkými jazykmi. Vysvetlí od úplného začiatku, čo je program, algoritmus, syntax, kompilátor, premenná, funkcia, knižnica, súbor, repozitár či API, aby si sa v ďalších kurzoch nestratil.",
+  pouzitie: ["úplný začiatok", "pojmy a súvislosti", "výber jazyka", "príprava na ďalšie kurzy"],
+  plan: ["Modul 1 · Počítač, program a jazyk", "Modul 2 · Od kódu k spusteniu", "Modul 3 · Stavebné kamene programov", "Modul 4 · Programovanie v praxi"],
+});
+K.registrujKurz({
   id: "html", nazov: "HTML", skratka: "</>", farba: "#e0522b", naFarbe: "#ffffff",
   podtitul: "Kostra každej webovej stránky",
   popis: "Jazyk, ktorým sa píše obsah webových stránok: nadpisy, texty, obrázky, odkazy, tabuľky a formuláre. Je to prvý krok pre každého, kto chce robiť web.",

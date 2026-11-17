@@ -7,33 +7,20 @@
   function r(v) { return P.riadky(v); }
 
   var OBR_POUZITIE = '<svg viewBox="0 0 340 120" role="img" aria-label="Python sa používa na umelú inteligenciu, dáta, automatizáciu, weby a vedu">' +
-    [["🤖", "umelá inteligencia"], ["📊", "dáta a grafy"], ["⚙️", "automatizácia"], ["🌐", "weby"], ["🔬", "veda"]].map(function (x, i) {
+    [["🤖", "umelá inteligencia"], ["📊", "dáta, grafy"], ["⚙️", "automatizácia"], ["🌐", "weby"], ["🔬", "veda"]].map(function (x, i) {
       var cx = 36 + i * 67;
       return '<circle cx="' + cx + '" cy="44" r="28" style="fill:var(--surface-2);stroke:#3572a5;stroke-width:2"/><text x="' + cx + '" y="53" text-anchor="middle" font-size="24">' + x[0] + '</text><text x="' + cx + '" y="94" text-anchor="middle" font-size="10" ' + TXT + ' style="fill:var(--text)">' + x[1].split(" ")[0] + '</text><text x="' + cx + '" y="107" text-anchor="middle" font-size="10" ' + TXT + ' style="fill:var(--text)">' + (x[1].split(" ")[1] || "") + "</text>";
     }).join("") + "</svg>";
 
-  /* Program ako recept: kroky idú presne v poradí, v akom sú napísané. */
-  var OBR_RECEPT = '<svg viewBox="0 0 340 128" role="img" aria-label="Program je ako recept: zoznam krokov, ktoré počítač vykoná presne v poradí, v akom sú napísané">' +
-    [["1", "print(\"Ahoj\")"], ["2", "print(2 + 3)"], ["3", "print(\"Koniec\")"]].map(function (x, i) {
-      var y = 8 + i * 40;
-      return '<rect x="8" y="' + y + '" width="196" height="32" rx="8" style="fill:var(--surface-2);stroke:#3572a5;stroke-width:1.5"/><circle cx="26" cy="' + (y + 16) + '" r="10" style="fill:#3572a5"/><text x="26" y="' + (y + 20.5) + '" text-anchor="middle" font-size="12" font-weight="700" ' + TXT + ' style="fill:#fff">' + x[0] + '</text><text x="44" y="' + (y + 20.5) + '" font-size="12.5" font-family="JBMono,monospace" style="fill:var(--text)">' + K.esc(x[1]) + "</text>";
-    }).join("") +
-    '<path d="M212 64h28" style="stroke:var(--muted);stroke-width:2"/><path d="M236 59l7 5-7 5" style="fill:var(--muted)"/>' +
-    '<rect x="250" y="20" width="82" height="88" rx="10" style="fill:#121729"/><text x="260" y="48" font-size="12.5" font-family="JBMono,monospace" style="fill:#e4e8f5">Ahoj</text><text x="260" y="68" font-size="12.5" font-family="JBMono,monospace" style="fill:#e4e8f5">5</text><text x="260" y="88" font-size="12.5" font-family="JBMono,monospace" style="fill:#e4e8f5">Koniec</text>' +
-    '<text x="291" y="124" text-anchor="middle" font-size="10.5" ' + TXT + ' style="fill:var(--muted)">výstup</text></svg>';
 
   /* ====================== Lekcia 1 ====================== */
-  var L1 = { id: "python-1-1", nazov: "Čo je program a Python", minut: 9, kroky: [
-    { typ: "vyklad", nadpis: "Čo je program",
-      text: "<p><b>Program</b> je zoznam presných pokynov pre počítač. Počítač ich vykonáva jeden po druhom, zhora nadol, presne v poradí, v akom sú napísané.</p><p>Pokyny píšeme v <b>programovacom jazyku</b>. Je to dohodnutý spôsob zápisu, ktorému rozumie človek aj počítač. Jeden z nich je <b>Python</b> a ten sa teraz naučíš.</p>", obr: OBR_RECEPT,
-      podrobne: "<p>Program si môžeš predstaviť ako <b>recept</b>. Recept má presné kroky: „nalej vodu, zapni varič, počkaj, kým voda zovrie“. Keď kroky prehodíš, čaj nebude. Rovnako je to s programom.</p><p>Je tu však jeden veľký rozdiel: kuchár si domyslí, čo si myslel, aj keď to nenapíšeš presne. <b>Počítač si nedomýšľa nič.</b> Urobí presne to, čo je napísané, aj keď je to nezmysel. Preto pri programovaní záleží na každom znaku: na úvodzovke, zátvorke aj veľkom písmene.</p><p>Neboj sa, že je to priveľa pravidiel. Budeš ich spoznávať postupne a aplikácia ťa na každú chybu upozorní.</p>",
-      hlbka: "<p>Procesor v telefóne v skutočnosti rozumie iba <b>strojovému kódu</b>, teda dlhým postupnostiam jednotiek a núl. Písať priamo v ňom by bolo veľmi pomalé a náročné.</p><p>Preto vznikli programovacie jazyky, ktoré sa podobajú ľudskej reči. Program v Pythone číta iný program, <b>interpreter</b>. Ten pokyny prekladá na činnosti procesora, a to priebežne, riadok po riadku. Jazyky ako C alebo C++ sa naopak celé preložia dopredu prekladačom (kompilátorom) a až potom sa spustia.</p>" },
-    { typ: "vyklad", nadpis: "Prečo práve Python",
-      text: "<p><b>Python</b> je jeden z najpopulárnejších programovacích jazykov na svete. Zápis je krátky a podobá sa angličtine, preto sa často učí ako prvý jazyk. Zároveň ho používajú profesionáli v Google, NASA, Netflixe aj vedci.</p>", obr: OBR_POUZITIE,
+  var L1 = { id: "python-1-1", nazov: "Čo je Python", minut: 8, kroky: [
+    { typ: "vyklad", nadpis: "Čo je Python",
+      text: "<p><b>Python</b> je jeden z najpopulárnejších programovacích jazykov na svete. Zápis je krátky a podobá sa angličtine, preto sa často učí ako prvý jazyk. Zároveň ho používajú profesionáli v Google, NASA, Netflixe aj vedci.</p><p class=\"tlmene\">Ak úplne začínaš a nevieš, čo je program, premenná či interpreter, prejdi najprv kurz <b>Základy programovania</b>.</p>", obr: OBR_POUZITIE,
       podrobne: "<p>Na čo sa Python používa najčastejšie:</p><ul><li><b>umelá inteligencia</b> a strojové učenie (aj modely ako ChatGPT sa trénujú pomocou Pythonu),</li><li>spracovanie <b>dát</b>: tabuľky, štatistiky, grafy,</li><li><b>automatizácia</b> nudnej práce: premenovanie stoviek súborov, posielanie e-mailov, sťahovanie údajov z webu,</li><li>serverová časť webových stránok,</li><li><b>veda a výskum</b>: výpočty, simulácie, spracovanie meraní.</li></ul><p>Na hry s rýchlou 3D grafikou alebo na mobilné aplikácie sa viac hodia iné jazyky, napríklad C++, C# alebo Kotlin. To, čo sa naučíš v Pythone (premenné, podmienky, cykly), však využiješ v každom z nich.</p>",
       hlbka: "<p>Python vytvoril Holanďan <b>Guido van Rossum</b> a prvá verzia vyšla v roku 1991. Meno nemá podľa hada, ale podľa britskej komediálnej skupiny Monty Python.</p><p>Python je <b>interpretovaný</b> jazyk: program sa nepreloží celý dopredu, ale vykonáva sa priebežne. Preto je pomalší ako C++, no pri väčšine bežných úloh to nevadí, lebo čas programátora je drahší ako čas počítača. Tam, kde treba rýchlosť (napríklad výpočty pri umelej inteligencii), Python volá knižnice napísané v C.</p><p>V tejto aplikácii beží Python priamo v telefóne vďaka projektu Brython, ktorý Python prekladá do JavaScriptu.</p>" },
-    { typ: "volba", otazka: "Čo platí o programe?", moznosti: ["Počítač vykoná presne to, čo je napísané, v danom poradí", "Počítač si domyslí, čo som chcel napísať", "Na poradí príkazov nezáleží", "Program funguje aj s preklepmi"], spravna: 0,
-      vysvetlenie: "Presne tak. Počítač si nič nedomýšľa a vykoná príkazy zhora nadol. Preto záleží na každom znaku aj na poradí." },
+    { typ: "volba", otazka: "Prečo sa Python často učí ako prvý jazyk?", moznosti: ["Má krátky a čitateľný zápis podobný angličtine", "Je najrýchlejší zo všetkých jazykov", "Funguje len v škole", "Nepotrebuje žiadne pravidlá zápisu"], spravna: 0,
+      vysvetlenie: "Python je čitateľný a stručný. Rýchlosťou ho prekonajú C či C++ a pravidlá zápisu má ako každý jazyk, len jednoduchšie." },
     { typ: "vyklad", nadpis: "Prvý program: print",
       text: "<p>Príkaz <code>print</code> vypíše na obrazovku to, čo mu dáš do zátvoriek. Tomu, čo program vypíše, hovoríme <b>výstup</b>.</p>" + UKAZ('print("Ahoj, svet!")\nprint(2 + 3)', "Ahoj, svet!\n5") +
         "<p><b>Text</b> píšeš v úvodzovkách. <b>Čísla a výpočty</b> píšeš bez úvodzoviek a Python ich vypočíta.</p>",
@@ -157,7 +144,7 @@
       kontrola: function (v, kod) { if (!/\/\//.test(kod) || !/%/.test(kod)) return "Použi // aj %: celé hodiny sú minuty // 60, zvyšok minuty % 60."; return r(v)[0] === "2 h 5 min" ? null : "Výstup má byť 2 h 5 min. Skontroluj poradie hodnôt v print."; },
       vysvetlenie: "// a % sú dvojica na prevody jednotiek: minúty na hodiny, centy na eurá, sekundy na minúty." },
     { typ: "vyklad", nadpis: "Modul 1 máš za sebou",
-      text: "<p>Čo už vieš:</p><ul><li>čo je <b>program</b> a prečo záleží na každom znaku,</li><li>vypísať text aj výpočty cez <code>print()</code>, s nastaveniami <code>sep</code> a <code>end</code>,</li><li>písať <b>komentáre</b> <code>#</code> a špeciálne znaky <code>\\n</code>, <code>\\\"</code>,</li><li>prečítať <b>chybu</b> a nájsť riadok, kde vznikla,</li><li>opýtať sa používateľa cez <code>input()</code> a uložiť odpoveď do <b>premennej</b>,</li><li>počítať s operátormi <code>+ - * / // % **</code> v správnom poradí.</li></ul>",
+      text: "<p>Čo už vieš:</p><ul><li>čo je <b>Python</b> a na čo sa používa, a prečo záleží na každom znaku,</li><li>vypísať text aj výpočty cez <code>print()</code>, s nastaveniami <code>sep</code> a <code>end</code>,</li><li>písať <b>komentáre</b> <code>#</code> a špeciálne znaky <code>\\n</code>, <code>\\\"</code>,</li><li>prečítať <b>chybu</b> a nájsť riadok, kde vznikla,</li><li>opýtať sa používateľa cez <code>input()</code> a uložiť odpoveď do <b>premennej</b>,</li><li>počítať s operátormi <code>+ - * / // % **</code> v správnom poradí.</li></ul>",
       podrobne: "<p>Ak si niečo nie si istý, vráť sa k lekcii. Hotové lekcie sú stále otvorené. Otázky, pri ktorých si sa pomýlil, ti aplikácia neskôr pripomenie v <b>Opakovaní</b>.</p>",
       tip: "Teraz príde test modulu (treba 70 %). Potom Modul 2: premenné a čísla podrobnejšie." },
   ] };
@@ -175,5 +162,5 @@
     { typ: "volba", lekcia: "python-1-5", otazka: "Čo vypíše <code>print((4 + 2) * 3)</code>?", moznosti: ["18", "10", "4 + 6", "chybu"], spravna: 0, vysvetlenie: "Zátvorky majú prednosť: 4 + 2 = 6 a 6 * 3 = 18." },
   ];
 
-  K.registrujModul("python", { cislo: 1, nazov: "Prvé príkazy", popis: "Čo je program, výpis cez print, komentáre, čítanie chýb, vstup, premenné a počítanie.", lekcie: [L1, L2, L3, L4, L5], test: { otazky: TEST, potrebne: 70 } });
+  K.registrujModul("python", { cislo: 1, nazov: "Prvé príkazy", popis: "Čo je Python, výpis cez print, komentáre, čítanie chýb, vstup, premenné a počítanie.", lekcie: [L1, L2, L3, L4, L5], test: { otazky: TEST, potrebne: 70 } });
 })();

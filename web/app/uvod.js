@@ -28,7 +28,7 @@
   function suhrn() {
     var k = 0, l = 0, kr = 0, mn = [], kMin = 99, kMax = 0;
     K.katalog.forEach(function (x) { (K.moduly[x.id] || []).forEach(function (m) { m.lekcie.forEach(function (le) { kMin = Math.min(kMin, le.kroky.length); kMax = Math.max(kMax, le.kroky.length); }); }); });
-    K.katalog.forEach(function (x) { var s = K.statKurzu(x.id); if (!s.lekcie) return; k++; l += s.lekcie; kr += s.kroky; mn.push(s.minut); });
+    K.katalog.forEach(function (x) { var s = K.statKurzu(x.id); if (!s.lekcie) return; l += s.lekcie; kr += s.kroky; if (x.id === "zaklady") return; k++; mn.push(s.minut); });
     mn.sort(function (a, b) { return a - b; });
     return { kurzy: k, lekcie: l, kroky: kr, minH: Math.round(mn[0] / 60), maxH: Math.round(mn[mn.length - 1] / 60), krokovNaLekciu: Math.round(kr / l), kMin: kMin, kMax: kMax };
   }
@@ -51,16 +51,16 @@
     return [
       { nadpis: "Vitaj v SyntaxCode", obr: '<div class="uv-logo">Syntax<b>Code</b></div>',
         text: "<p>Naučíš sa programovať <b>po slovensky</b>, v malých krokoch a priamo v telefóne. Nepotrebuješ počítač ani žiadne skúsenosti.</p>" +
-          '<ul class="uv-body"><li><b>' + s.kurzy + " programovacích jazykov</b>, od HTML a Pythonu po C a Javu</li><li><b>" + s.lekcie + " lekcií</b> s úlohami, ktoré si hneď vyskúšaš</li><li>Kód sa <b>spustí a skontroluje</b> hneď, ako ho napíšeš</li><li>Chyby ti vysvetlíme <b>po slovensky</b>, nie v angličtine</li></ul>" +
+          '<ul class="uv-body"><li><b>' + s.kurzy + " programovacích jazykov</b>, od HTML a Pythonu po C a Javu, a pred nimi kurz <b>Základy programovania</b></li><li><b>" + s.lekcie + " lekcií</b> s úlohami, ktoré si hneď vyskúšaš</li><li>Kód sa <b>spustí a skontroluje</b> hneď, ako ho napíšeš</li><li>Chyby ti vysvetlíme <b>po slovensky</b>, nie v angličtine</li></ul>" +
           "<p class=\"tlmene\">Na nasledujúcich stránkach ti ukážeme, ako sa v aplikácii učí. Potom sa ťa opýtame na pár vecí a zostavíme ti <b>osobný plán</b>.</p>" },
       { nadpis: "Ako je kurz poskladaný", obr:
           '<div class="uv-strom"><div class="uv-uroven" style="--f:#3572a5"><b>Kurz</b><span>napr. Python · ' + py.moduly + " modulov</span></div>" +
           '<div class="uv-uroven" style="--f:#6a3fc9"><b>Modul</b><span>jedna téma · 5 lekcií + test</span></div>' +
           '<div class="uv-uroven" style="--f:#11805b"><b>Lekcia</b><span>' + s.kMin + " až " + s.kMax + " krokov · asi 8 minút</span></div>" +
           '<div class="uv-uroven" style="--f:#c96a00"><b>Krok</b><span>jedna malá vec: vysvetlenie alebo úloha</span></div></div>',
-        text: "<p>Každý <b>kurz</b> učí jeden programovací jazyk. Je rozdelený na <b>moduly</b>, teda väčšie témy, napríklad „Podmienky“ alebo „Cykly“.</p>" +
+        text: "<p>Každý <b>kurz</b> učí jeden programovací jazyk (iba úvodný kurz <b>Základy programovania</b> vysvetľuje, ako programovanie funguje všeobecne). Kurz je rozdelený na <b>moduly</b>, teda väčšie témy, napríklad „Podmienky“ alebo „Cykly“.</p>" +
           "<p>Modul má <b>5 lekcií</b> a na konci <b>test</b>. Lekcia sa skladá z <b>krokov</b>: v jednom kroku sa niečo dozvieš alebo si to hneď vyskúšaš. Jedna lekcia trvá zvyčajne 7 až 10 minút, takže ju zvládneš aj cestou autobusom.</p>" +
-          "<p>Na konci kurzu sú <b>3 záverečné projekty</b>, väčšie programy, v ktorých použiješ všetko, čo si sa naučil. Celý kurz trvá podľa jazyka približne <b>" + s.minH + " až " + s.maxH + " hodín</b> čistého času.</p>" },
+          "<p>Na konci každého jazykového kurzu sú <b>3 záverečné projekty</b>, väčšie programy, v ktorých použiješ všetko, čo si sa naučil. Celý kurz trvá podľa jazyka približne <b>" + s.minH + " až " + s.maxH + " hodín</b> čistého času.</p>" },
       { nadpis: "Čo ťa čaká v lekcii", obr: "",
         text: '<div class="uv-typy">' +
           '<div>' + ikonaKruh(IK.kniha) + "<p><b>Vysvetlenie</b>Prečítaš si novú vec s príkladom. Ak chceš viac, prepni na <i>Podrobne</i>.</p></div>" +
@@ -182,6 +182,7 @@
     neviem: { zaklad: ["python", "html", "css"], dalej: ["js"], nazov: "" },
   };
   var PRECO_KURZ = {
+    zaklady: "Krátky kurz bez inštalácie, ktorý ti vysvetlí, ako programovanie funguje: program, kompilátor, premenné, funkcie, knižnice, súbory aj Git. S ním sa v ďalších kurzoch nestratíš.",
     html: "Základ každej webovej stránky. Výsledok uvidíš hneď, preto je to výborný začiatok.",
     css: "Z obyčajnej stránky spraví peknú. Farby, písmo a rozloženie aj na mobile.",
     js: "Oživí stránky: reaguje na kliknutia, počíta a mení obsah. Jazyk číslo jeden na webe.",
@@ -219,6 +220,8 @@
     } else kurzy = zaklad.slice(0, 4);
     if (o.preco === "zabava" && (o.skusenosti === "zaklady" || o.skusenosti === "pokrocily")) kurzy.push("smalltalk");
     kurzy = unik(kurzy); if (!kurzy.length) kurzy = ["python"];
+    /* Začiatočníci (aj tí, čo dotazník preskočili) začnú kurzom Základy programovania. */
+    if (o.skusenosti !== "zaklady" && o.skusenosti !== "pokrocily" && K.moduly.zaklady) kurzy.unshift("zaklady");
     var minut = +o.minut || 10, dni = +o.dni || 5;
     var faktor = { nic: 1.3, trochu: 1.15, zaklady: 1, pokrocily: 0.75 }[o.skusenosti] || 1.2;
     return { verzia: 1, odpovede: o, kurzy: kurzy, minut: minut, dni: dni, faktor: faktor, zaciatok: K.den() };
